@@ -96,7 +96,7 @@
   z-index: 1;
 }
 
-.map-selector-viewport .leaflet-control {
+.map-selector-viewport  {
   z-index: 2;
 }
 

@@ -34,20 +34,8 @@ code {
   font-size: 14px;
 }
 
-.leaflet-control {
-  background: white;
-  border: 2px solid rgba(0,0,0,0.2);
-  border-radius: 4px;
-  padding: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
 /* Mobile responsive controls */
 @media (max-width: 768px) {
-  .leaflet-control {
-    padding: 3px;
-    font-size: 14px;
-  }
   
   .leaflet-popup-content {
     font-size: 12px;
