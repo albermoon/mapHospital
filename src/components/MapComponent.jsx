@@ -42,12 +42,13 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       // Exit location selection mode
       setIsSelectingLocation(false)
       setLocationSelectionCallback(null)
+      setSelectedCoordinates(null)
     } else {
       // Enter location selection mode
       setIsSelectingLocation(true)
       setLocationSelectionCallback(() => callback)
-      // Ensure form stays open when entering location selection mode
-      setIsFormOpen(true)
+      // Hide form when entering location selection mode
+      setIsFormOpen(false)
     }
   }
 
@@ -717,26 +718,26 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             const confirmBtn = document.getElementById('confirm-location-btn')
             const cancelBtn = document.getElementById('cancel-location-btn')
             
-                      if (confirmBtn) {
-            confirmBtn.addEventListener('click', () => {
-              // Save coordinates and exit selection mode
-              setSelectedCoordinates([lat, lng])
-              setIsSelectingLocation(false)
-              
-              // Call the callback with the selected coordinates
-              if (locationSelectionCallback) {
-                locationSelectionCallback([lat, lng])
-                setLocationSelectionCallback(null)
-              }
-              
-              // Ensure form stays open after location selection
-              setIsFormOpen(true)
-              
-              // Close popup and remove marker
-              mapInstance.closePopup(confirmPopup)
-              mapInstance.removeLayer(tempMarker)
-            })
-          }
+            if (confirmBtn) {
+              confirmBtn.addEventListener('click', () => {
+                // Save coordinates and exit selection mode
+                setSelectedCoordinates([lat, lng])
+                setIsSelectingLocation(false)
+                
+                // Call the callback with the selected coordinates
+                if (locationSelectionCallback) {
+                  locationSelectionCallback([lat, lng])
+                  setLocationSelectionCallback(null)
+                }
+                
+                // Show form again after location selection
+                setIsFormOpen(true)
+                
+                // Close popup and remove marker
+                mapInstance.closePopup(confirmPopup)
+                mapInstance.removeLayer(tempMarker)
+              })
+            }
             
             if (cancelBtn) {
               cancelBtn.addEventListener('click', () => {
@@ -835,7 +836,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
                   border: none; 
                   padding: 8px 16px; 
                   border-radius: 4px; 
-                  border-radius: 4px; 
                   cursor: pointer;
                   font-size: 14px;
                 "
@@ -864,7 +864,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
                 setLocationSelectionCallback(null)
               }
               
-              // Ensure form stays open after location selection
+              // Show form again after location selection
               setIsFormOpen(true)
               
               // Close popup and remove marker
@@ -893,7 +893,29 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
   return (
     <div className="map-container">
-      <div ref={mapRef} className="map-viewport"></div>
+      <div 
+        ref={mapRef} 
+        className={`map-viewport ${isSelectingLocation ? 'location-selection-mode' : ''}`}
+      ></div>
+      
+      {/* Location selection mode indicator */}
+      {isSelectingLocation && (
+        <div className="location-selection-overlay">
+          <div className="location-selection-banner">
+            <div className="location-instructions">
+              <p>🗺️ <strong>Modo de Selección de Ubicación</strong></p>
+              <p>Haga clic en el mapa para seleccionar la ubicación. Los datos del formulario se mantendrán.</p>
+            </div>
+            <button 
+              type="button" 
+              className="btn-secondary location-cancel-btn" 
+              onClick={() => handleLocationSelection(null)}
+            >
+              ← Cancelar Selección de Ubicación
+            </button>
+          </div>
+        </div>
+      )}
       
       <AddOrganizationForm
         isOpen={isFormOpen}

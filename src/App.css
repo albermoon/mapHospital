@@ -63,6 +63,10 @@ main {
   height: 100%;
 }
 
+/* Change cursor when in location selection mode */
+.map-viewport.location-selection-mode {
+  cursor: crosshair;
+}
 
 
 /* Geolocation control styles */
@@ -640,4 +644,81 @@ main {
   font-size: 18px;
   color: #5f6368;
   font-weight: bold;
+}
+
+/* Location selection overlay styles */
+.location-selection-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.location-selection-banner {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  pointer-events: auto;
+  border: 2px solid #007bff;
+}
+
+.location-instructions {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.location-instructions p {
+  margin: 5px 0;
+  color: #333;
+}
+
+.location-instructions p:first-child {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #007bff;
+}
+
+.location-instructions p:last-child {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.location-cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.location-cancel-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .location-selection-banner {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    width: auto;
+    max-width: none;
+  }
 }
