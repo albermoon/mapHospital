@@ -1,5 +1,5 @@
-// Servicio simplificado de Google Sheets usando solo API Key pública
-// Este servicio evita los problemas de autenticación compleja
+// Servicio simplificado de Google Sheets usando Google Apps Script para escritura
+// Este servicio usa tu script personalizado para guardar datos
 
 import { GOOGLE_SHEETS_API_KEY, SPREADSHEET_ID, SHEET_NAMES, COLUMN_CONFIG } from '../config/googleSheetsSimple.js'
 
@@ -8,6 +8,9 @@ class GoogleSheetsServiceSimple {
     this.spreadsheetId = SPREADSHEET_ID
     this.sheetName = SHEET_NAMES.ORGANIZATIONS
     this.apiKey = GOOGLE_SHEETS_API_KEY
+    
+    // URL de tu Google Apps Script
+    this.scriptUrl = 'https://script.google.com/macros/s/AKfycbyLkK9D8Tdh62PA5lECXKyfGuz889J2S4ktJRNd_wBVmWyTxBv69U4HITQTEPzVsSDUYw/exec'
     
     // Verificar que estamos en el navegador
     if (typeof window === 'undefined') {
@@ -74,13 +77,12 @@ class GoogleSheetsServiceSimple {
       }
       
       return rows.map((row, index) => {
-        const [id, name, type, description, address, phone, website, email, lat, lng, country, city, beds, specialties] = row
+        const [id, name, type, address, phone, website, email, lat, lng, country, city, specialty, status] = row
         
         return {
           id: parseInt(id) || index + 1,
           name: name || '',
           type: type || 'hospital',
-          description: description || '',
           address: address || '',
           phone: phone || null,
           website: website || null,
@@ -88,8 +90,8 @@ class GoogleSheetsServiceSimple {
           coordinates: lat && lng ? [parseFloat(lat), parseFloat(lng)] : null,
           country: country || '',
           city: city || '',
-          beds: beds ? parseInt(beds) : null,
-          specialties: specialties ? specialties.split(',').map(s => s.trim()) : []
+          specialty: specialty || '',
+          status: status ? parseInt(status) : 0
         }
       }).filter(org => org.name) // Filtrar filas vacías
       
@@ -102,6 +104,54 @@ class GoogleSheetsServiceSimple {
     }
   }
 
+  // Añadir nueva organización usando Google Apps Script
+  async addOrganization(organization) {
+    try {
+      console.log('Enviando organización a Google Apps Script:', organization)
+      
+      // Preparar datos en el formato que espera tu script - NUEVA ESTRUCTURA
+      const scriptData = {
+        ID: organization.id || '',
+        Name: organization.name || '',
+        Type: organization.type === 'hospital' ? 'Hospital' : 'Association',
+        Address: organization.address || '',
+        Phone: organization.phone || '',
+        Website: organization.website || '',
+        Email: organization.email || '',
+        Latitude: organization.coordinates ? organization.coordinates[0] : '',
+        Longitude: organization.coordinates ? organization.coordinates[1] : '',
+        Country: organization.country || '',
+        City: organization.city || '',
+        Specialty: organization.specialty || ''
+        // Status se establece automáticamente como 0 en el script
+      }
+      
+      console.log('Datos formateados para el script:', scriptData)
+      
+      // Enviar datos al Google Apps Script
+      const response = await fetch(this.scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors', // Importante para evitar problemas de CORS
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scriptData)
+      })
+      
+      console.log('Respuesta del script:', response)
+      
+      // Como estamos usando no-cors, no podemos leer la respuesta
+      // Pero asumimos que fue exitoso si no hay error
+      
+      console.log('Organización enviada exitosamente al Google Apps Script')
+      return true
+      
+    } catch (error) {
+      console.error('Error al enviar organización al Google Apps Script:', error)
+      throw new Error(`Error al guardar en Google Sheets: ${error.message}`)
+    }
+  }
+
   // Datos de ejemplo para desarrollo
   getSampleData() {
     return [
@@ -109,33 +159,34 @@ class GoogleSheetsServiceSimple {
         id: 1,
         name: "European Patients' Forum (EPF)",
         type: "association",
-        description: "Organización líder que representa a pacientes en Europa",
         address: "Rue du Trône 60, 1050 Brussels, Belgium",
         phone: "+32 2 280 23 34",
         website: "https://www.eu-patient.eu",
         email: "info@eu-patient.eu",
         coordinates: [50.8503, 4.3517],
         country: "Belgium",
-        city: "Brussels"
+        city: "Brussels",
+        specialty: "Defensa de pacientes",
+        status: 1
       },
       {
         id: 2,
         name: "Alianza General de Pacientes (AGP)",
         type: "association",
-        description: "Asociación española de defensa de los derechos de los pacientes",
         address: "Calle de la Princesa 25, 28008 Madrid, Spain",
         phone: "+34 91 541 80 00",
         website: "https://www.agp.es",
         email: "info@agp.es",
         coordinates: [40.4168, -3.7038],
         country: "Spain",
-        city: "Madrid"
+        city: "Madrid",
+        specialty: "Derechos de pacientes",
+        status: 1
       },
       {
         id: 3,
         name: "Charité - Universitätsmedizin Berlin",
         type: "hospital",
-        description: "Uno de los hospitales universitarios más grandes de Europa",
         address: "Charitéplatz 1, 10117 Berlin, Germany",
         phone: "+49 30 450 50",
         website: "https://www.charite.de",
@@ -143,8 +194,8 @@ class GoogleSheetsServiceSimple {
         coordinates: [52.5200, 13.4050],
         country: "Germany",
         city: "Berlin",
-        beds: 3000,
-        specialties: ["Cardiología", "Neurología", "Oncología", "Traumatología"]
+        specialty: "Medicina general",
+        status: 1
       }
     ]
   }
@@ -193,23 +244,18 @@ class GoogleSheetsServiceSimple {
   }
 
   // Métodos simulados para mantener compatibilidad
-  async addOrganization(organization) {
-    console.warn('Escritura no disponible con API key pública. Solo lectura.')
-    return true
-  }
-
   async updateOrganization(organization) {
-    console.warn('Escritura no disponible con API key pública. Solo lectura.')
+    console.warn('Actualización no implementada aún. Usando Google Apps Script.')
     return true
   }
 
   async deleteOrganization(organizationId) {
-    console.warn('Escritura no disponible con API key pública. Solo lectura.')
+    console.warn('Eliminación no implementada aún. Usando Google Apps Script.')
     return true
   }
 
   async syncWithLocalData(localOrganizations) {
-    console.warn('Escritura no disponible con API key pública. Solo lectura.')
+    console.warn('Sincronización no implementada aún. Usando Google Apps Script.')
     return true
   }
 }

@@ -12,6 +12,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
     email: '',
     country: '',
     city: '',
+    specialty: '',
     coordinates: null
   })
 
@@ -64,7 +65,8 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
       email: formData.email.trim() || null,
       coordinates: formData.coordinates,
       country: formData.country.trim(),
-      city: formData.city.trim()
+      city: formData.city.trim(),
+      specialty: formData.specialty.trim() || null
     }
 
     onAdd(newOrganization)
@@ -81,6 +83,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
       email: '',
       country: '',
       city: '',
+      specialty: '',
       coordinates: null
     })
     setErrors({})
@@ -272,6 +275,23 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
                 disabled={isLocationSelectionMode}
               />
               {errors.city && <span className="error-message">{errors.city}</span>}
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="specialty">Especialidad</label>
+              <input
+                type="text"
+                id="specialty"
+                name="specialty"
+                value={formData.specialty}
+                onChange={handleInputChange}
+                placeholder="Especialidad de la organización"
+                className={errors.specialty ? 'error' : ''}
+                disabled={isLocationSelectionMode}
+              />
+              {errors.specialty && <span className="error-message">{errors.specialty}</span>}
             </div>
           </div>
 
