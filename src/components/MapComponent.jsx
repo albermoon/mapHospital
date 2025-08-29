@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 })
 
-const MapComponent = () => {
+const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization }) => {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const [organizations, setOrganizations] = useState([])
@@ -25,12 +25,16 @@ const MapComponent = () => {
   const [locationSelectionCallback, setLocationSelectionCallback] = useState(null)
   const [selectedCoordinates, setSelectedCoordinates] = useState(null)
 
-
-  // Load organizations data
+  // Load organizations data from props or fallback to local data
   useEffect(() => {
-    setOrganizations(organizationsData.organizations)
-    setFilteredOrganizations(organizationsData.organizations)
-  }, [])
+    if (propOrganizations && propOrganizations.length > 0) {
+      setOrganizations(propOrganizations)
+      setFilteredOrganizations(propOrganizations)
+    } else {
+      setOrganizations(organizationsData.organizations)
+      setFilteredOrganizations(organizationsData.organizations)
+    }
+  }, [propOrganizations])
 
   // Function to handle location selection
   const handleLocationSelection = (callback) => {
@@ -49,8 +53,13 @@ const MapComponent = () => {
 
   // Function to add new organization
   const handleAddOrganization = (newOrg) => {
-    setOrganizations(prev => [...prev, newOrg])
-    setFilteredOrganizations(prev => [...prev, newOrg])
+    // Use prop function if available, otherwise use local state
+    if (onAddOrganization) {
+      onAddOrganization(newOrg)
+    } else {
+      setOrganizations(prev => [...prev, newOrg])
+      setFilteredOrganizations(prev => [...prev, newOrg])
+    }
     
     // Add marker to map if it exists
     if (map) {
@@ -59,31 +68,31 @@ const MapComponent = () => {
         (isMobile ? hospitalIconMobile : hospitalIcon) : 
         (isMobile ? associationIconMobile : associationIcon)
       
-              const popupContent = `
-          <div class="organization-popup">
-            <h3 style="margin: 0 0 10px 0; color: ${newOrg.type === 'hospital' ? '#dc3545' : '#007bff'}">
-              ${newOrg.name}
-            </h3>
-            <p style="margin: 5px 0; font-size: 12px; color: #666;">
-              <strong>Tipo:</strong> ${newOrg.type === 'hospital' ? '🏥 Hospital' : '👥 Asociación de Pacientes'}
-            </p>
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>📍 Dirección:</strong><br>
-              <a href="#" class="address-link" data-lat="${newOrg.coordinates[0]}" data-lng="${newOrg.coordinates[1]}" style="color: #007bff; text-decoration: none; cursor: pointer;">
-                ${newOrg.address}
-              </a>
-            </p>
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>📞 Teléfono:</strong> ${newOrg.phone}
-            </p>
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>🌐 Web:</strong> <a href="${newOrg.website}" target="_blank">${newOrg.website}</a>
-            </p>
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>✉️ Email:</strong> ${newOrg.email}
-            </p>
-          </div>
-        `
+      const popupContent = `
+        <div class="organization-popup">
+          <h3 style="margin: 0 0 10px 0; color: ${newOrg.type === 'hospital' ? '#dc3545' : '#007bff'}">
+            ${newOrg.name}
+          </h3>
+          <p style="margin: 5px 0; font-size: 12px; color: #666;">
+            <strong>Tipo:</strong> ${newOrg.type === 'hospital' ? '🏥 Hospital' : '👥 Asociación de Pacientes'}
+          </p>
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>📍 Dirección:</strong><br>
+            <a href="#" class="address-link" data-lat="${newOrg.coordinates[0]}" data-lng="${newOrg.coordinates[1]}" style="color: #007bff; text-decoration: none; cursor: pointer;">
+              ${newOrg.address}
+            </a>
+          </p>
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>📞 Teléfono:</strong> ${newOrg.phone || 'No disponible'}
+          </p>
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>🌐 Web:</strong> ${newOrg.website ? `<a href="${newOrg.website}" target="_blank">${newOrg.website}</a>` : 'No disponible'}
+          </p>
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>✉️ Email:</strong> ${newOrg.email || 'No disponible'}
+          </p>
+        </div>
+      `
 
       const marker = L.marker(newOrg.coordinates, { icon })
         .addTo(map)

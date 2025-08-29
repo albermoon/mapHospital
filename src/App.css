@@ -19,6 +19,29 @@
   font-size: 1.5rem;
 }
 
+.google-sheets-toggle {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.google-sheets-toggle:hover {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.google-sheets-toggle:active {
+  transform: translateY(0);
+}
+
 main {
   flex: 1;
   padding: 0;
