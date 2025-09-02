@@ -13,7 +13,6 @@ export const useGoogleSheets = (useTestMode = false) => {
 
   const GOOGLE_APPS_SCRIPT_URL = useTestMode ? '' : import.meta.env.VITE_GOOGLE_SCRIPT_URL
 
-
   // Sample data for test mode
   const getSampleData = (sheetName) => {
     if (sheetName === SHEET_NAMES.HOSPITALS) {
@@ -56,6 +55,7 @@ export const useGoogleSheets = (useTestMode = false) => {
     return []
   }
 
+  // POST request to Google Script via proxy
   const callGoogleScript = async (payload) => {
     if (!GOOGLE_APPS_SCRIPT_URL) {
       throw new Error('Google Apps Script URL not configured')
@@ -75,6 +75,7 @@ export const useGoogleSheets = (useTestMode = false) => {
     return result
   }
 
+  // GET request to fetch data
   const fetchData = async (sheetName = SHEET_NAMES.HOSPITALS) => {
     setLoading(true)
     setError(null)
@@ -84,13 +85,25 @@ export const useGoogleSheets = (useTestMode = false) => {
         setData(getSampleData(sheetName))
         setConnected(false)
       } else {
-        // TODO: real fetch GET endpoint
-        setData(getSampleData(sheetName))
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL)
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+        const result = await response.json()
+        if (result.status === 'error') throw new Error(result.message)
+
+        // Filter by sheet type (map sheet name to Type field)
+        const filteredData = result.data.filter(item => {
+          if (sheetName === SHEET_NAMES.HOSPITALS) return item.Type.toLowerCase() === 'hospital'
+          if (sheetName === SHEET_NAMES.ASSOCIATIONS) return item.Type.toLowerCase() === 'association' || item.Type.toLowerCase() === 'asociacion'
+          return false
+        })
+
+        setData(filteredData)
         setConnected(true)
       }
     } catch (err) {
       setError(err.message)
       setConnected(false)
+      setData([])
     } finally {
       setLoading(false)
     }
@@ -117,7 +130,7 @@ export const useGoogleSheets = (useTestMode = false) => {
     }
   }
 
-  // Only expose test functions if in test mode
+  // Hook API
   const api = {
     data,
     loading,

@@ -37,5 +37,31 @@ app.post('/api', async (req, res) => {
     }
 });
 
+app.get('/api', async (req, res) => {
+    try {
+        if (!GOOGLE_SCRIPT_URL) throw new Error('GOOGLE_SCRIPT_URL not set');
+
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error('Invalid response from Google Script:\n' + text);
+        }
+
+        res.json(data);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`))

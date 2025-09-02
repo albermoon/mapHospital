@@ -6,7 +6,7 @@ const GoogleScriptTester = () => {
     loading,
     error,
     connected,
-    testSaveToGoogleSheets,
+    saveData,
     useTestMode
   } = useGoogleSheets(false) // false = production mode
 
@@ -39,20 +39,20 @@ const GoogleScriptTester = () => {
       let result
       
       if (testType === 'hospital') {
-        result = await testSaveToGoogleSheets({
+        result = await saveData({
           ...customData,
           Type: 'Hospital',
           ID: `TEST_H_${Date.now()}`
         })
       } else if (testType === 'association') {
-        result = await testSaveToGoogleSheets({
+        result = await saveData({
           ...customData,
           Type: 'Association',
           Name: customData.Name.replace('Hospital', 'Association'),
           ID: `TEST_A_${Date.now()}`
         })
       } else {
-        result = await testSaveToGoogleSheets()
+        result = await saveData()
       }
 
       setTestResults(prev => [{

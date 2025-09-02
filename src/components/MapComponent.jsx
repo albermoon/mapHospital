@@ -24,14 +24,15 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const [locationSelectionCallback, setLocationSelectionCallback] = useState(null)
   const [selectedCoordinates, setSelectedCoordinates] = useState(null)
 
-  // Load organizations data from props or fallback to local data
+  // Load organizations data from props or fallback to empty array
   useEffect(() => {
     if (propOrganizations && propOrganizations.length > 0) {
       setOrganizations(propOrganizations)
       setFilteredOrganizations(propOrganizations)
     } else {
-      setOrganizations(organizationsData.organizations)
-      setFilteredOrganizations(organizationsData.organizations)
+      // Fallback to empty array instead of undefined organizationsData
+      setOrganizations([])
+      setFilteredOrganizations([])
     }
   }, [propOrganizations])
 
@@ -60,14 +61,14 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       setOrganizations(prev => [...prev, newOrg])
       setFilteredOrganizations(prev => [...prev, newOrg])
     }
-    
+
     // Add marker to map if it exists
     if (map) {
       const isMobile = window.innerWidth <= 768
-      const icon = newOrg.type === 'hospital' ? 
-        (isMobile ? hospitalIconMobile : hospitalIcon) : 
+      const icon = newOrg.type === 'hospital' ?
+        (isMobile ? hospitalIconMobile : hospitalIcon) :
         (isMobile ? associationIconMobile : associationIcon)
-      
+
       const popupContent = `
         <div class="organization-popup">
           <h3 style="margin: 0 0 10px 0; color: ${newOrg.type === 'hospital' ? '#dc3545' : '#007bff'}">
@@ -121,7 +122,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       const markers = []
       organizations.forEach(org => {
         const icon = org.type === 'hospital' ? hospitalIconToUse : associationIconToUse
-        
+
         const popupContent = `
           <div class="organization-popup">
             <h3 style="margin: 0 0 10px 0; color: ${org.type === 'hospital' ? '#dc3545' : '#007bff'}">
@@ -151,7 +152,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         const marker = L.marker(org.coordinates, { icon })
           .addTo(mapInstance)
           .bindPopup(popupContent, { maxWidth: 300 })
-        
+
         markers.push(marker)
       })
 
@@ -159,7 +160,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       mapInstance.on('popupopen', (e) => {
         const popup = e.popup
         const addressLinks = popup.getElement().querySelectorAll('.address-link')
-        
+
         addressLinks.forEach(link => {
           link.addEventListener('click', (e) => {
             e.preventDefault()
@@ -174,15 +175,15 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       const openInMaps = (lat, lng) => {
         // Detect iOS device
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-        
+
         if (isIOS) {
           // Try to open in Apple Maps first, fallback to Google Maps
           const appleMapsUrl = `maps://maps.apple.com/?q=${lat},${lng}`
           const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-          
+
           // Try to open Apple Maps
           window.location.href = appleMapsUrl
-          
+
           // Fallback to Google Maps if Apple Maps doesn't open
           setTimeout(() => {
             window.open(googleMapsUrl, '_blank')
@@ -198,12 +199,12 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       const updateVisibleCounts = () => {
         const hospitalFilter = document.querySelector('#hospital-filter')
         const associationFilter = document.querySelector('#association-filter')
-        
-        const visibleHospitals = hospitalFilter?.checked ? 
+
+        const visibleHospitals = hospitalFilter?.checked ?
           organizations.filter(org => org.type === 'hospital').length : 0
-        const visibleAssociations = associationFilter?.checked ? 
+        const visibleAssociations = associationFilter?.checked ?
           organizations.filter(org => org.type === 'association').length : 0
-        
+
         setVisibleCounts({
           hospitals: visibleHospitals,
           associations: visibleAssociations
@@ -215,12 +216,12 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         options: {
           position: 'topleft'
         },
-        onAdd: function(map) {
+        onAdd: function (map) {
           const container = L.DomUtil.create('div', ' filter-control')
-          
+
           const hospitals = organizations.filter(org => org.type === 'hospital')
           const associations = organizations.filter(org => org.type === 'association')
-          
+
           container.innerHTML = `
             <div class="filter-panel" id="filter-panel">
               <button class="filter-toggle" id="filter-toggle" style="display: none;">
@@ -246,24 +247,24 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               </div>
             </div>
           `
-          
+
           // Add event listeners for filters
           const hospitalFilter = container.querySelector('#hospital-filter')
           const associationFilter = container.querySelector('#association-filter')
           const filterPanel = container.querySelector('#filter-panel')
           const filterToggle = container.querySelector('#filter-toggle')
-          
+
           // Check if mobile and collapse initially
           if (window.innerWidth <= 768) {
             filterPanel.classList.add('collapsed')
             filterToggle.style.display = 'block'
           }
-          
+
           // Toggle filter panel on mobile
           filterToggle.addEventListener('click', () => {
             filterPanel.classList.toggle('collapsed')
           })
-          
+
           hospitalFilter.addEventListener('change', (e) => {
             markers.forEach((marker, index) => {
               const org = organizations[index]
@@ -277,7 +278,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             })
             updateVisibleCounts()
           })
-          
+
           associationFilter.addEventListener('change', (e) => {
             markers.forEach((marker, index) => {
               const org = organizations[index]
@@ -291,7 +292,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             })
             updateVisibleCounts()
           })
-          
+
           return container
         }
       })
@@ -303,7 +304,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         options: {
           position: 'topright'
         },
-        onAdd: function(map) {
+        onAdd: function (map) {
           const container = L.DomUtil.create('div', 'address-search-control address-search-center')
           container.innerHTML = `
             <div class="address-search-container" id="address-search-container">
@@ -321,17 +322,17 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             </div>
             <div class="address-results" id="address-results" style="display: none;"></div>
           `
-          
+
           const input = container.querySelector('#address-search-input')
           const button = container.querySelector('#address-search-btn')
           const resultsContainer = container.querySelector('#address-results')
           const searchContainer = container.querySelector('#address-search-container')
-          
+
           // Check if mobile and collapse initially
           if (window.innerWidth <= 768) {
             searchContainer.classList.add('collapsed')
           }
-          
+
           // Toggle search container on mobile
           button.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -360,24 +361,24 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               }
             }
           })
-          
+
           let searchTimeout
-          
+
           // Search on input change with debounce
           input.addEventListener('input', (e) => {
             clearTimeout(searchTimeout)
             const query = e.target.value.trim()
-            
+
             if (query.length < 3) {
               resultsContainer.style.display = 'none'
               return
             }
-            
+
             searchTimeout = setTimeout(() => {
               searchAddress(query, resultsContainer, map, input)
             }, 500)
           })
-          
+
           // Search on Enter key
           input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -387,7 +388,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               }
             }
           })
-          
+
           // Close search on click outside
           document.addEventListener('click', (e) => {
             if (!container.contains(e.target) && window.innerWidth <= 768) {
@@ -396,7 +397,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               resultsContainer.style.display = 'none'
             }
           })
-          
+
           return container
         }
       })
@@ -408,7 +409,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         const filterPanel = document.querySelector('#filter-panel')
         const filterToggle = document.querySelector('#filter-toggle')
         const searchContainer = document.querySelector('#address-search-container')
-        
+
         if (window.innerWidth <= 768) {
           // Mobile: collapse controls
           if (filterPanel && filterToggle) {
@@ -431,7 +432,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           }
         }
       }
-      
+
       window.addEventListener('resize', handleResize)
 
       // Function to search addresses using a mock API (to avoid CORS issues)
@@ -439,10 +440,10 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         try {
           resultsContainer.innerHTML = '<div class="loading">Buscando...</div>'
           resultsContainer.style.display = 'block'
-          
+
           // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 500))
-          
+
           // Mock results for demonstration (you can replace this with a real API call)
           const mockResults = [
             {
@@ -471,7 +472,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               lon: -0.8891
             }
           ]
-          
+
           let resultsHTML = ''
           mockResults.forEach((result, index) => {
             const displayName = result.display_name.split(',').slice(0, 3).join(',')
@@ -485,19 +486,19 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               </div>
             `
           })
-          
+
           resultsContainer.innerHTML = resultsHTML
-          
+
           // Add click events to results
           const resultElements = resultsContainer.querySelectorAll('.address-result')
           resultElements.forEach((element) => {
             element.addEventListener('click', () => {
               const lat = parseFloat(element.dataset.lat)
               const lon = parseFloat(element.dataset.lon)
-              
+
               // Center map on selected location
               map.setView([lat, lon], 13)
-              
+
               // Add a temporary marker
               const tempMarker = L.marker([lat, lon], {
                 icon: L.divIcon({
@@ -523,18 +524,18 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
                   iconAnchor: [10, 10]
                 })
               }).addTo(map)
-              
+
               // Remove marker after 10 seconds
               setTimeout(() => {
                 map.removeLayer(tempMarker)
               }, 10000)
-              
+
               // Hide results and clear input
               resultsContainer.style.display = 'none'
               inputElement.value = ''
             })
           })
-          
+
         } catch (error) {
           console.error('Error searching address:', error)
           resultsContainer.innerHTML = '<div class="error">Error en la búsqueda. Intenta de nuevo.</div>'
@@ -546,19 +547,19 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         options: {
           position: 'bottomright'
         },
-        onAdd: function(map) {
+        onAdd: function (map) {
           const container = L.DomUtil.create('div', ' add-control')
           container.innerHTML = `
             <button class="add-btn round-btn" title="Añadir nueva organización">
               <span class="add-icon">➕</span>
             </button>
           `
-          
+
           const button = container.querySelector('button')
           button.addEventListener('click', () => {
             setIsFormOpen(true)
           })
-          
+
           return container
         }
       })
@@ -570,14 +571,14 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         options: {
           position: 'bottomright'
         },
-        onAdd: function(map) {
+        onAdd: function (map) {
           const container = L.DomUtil.create('div', ' geolocation-control')
           container.innerHTML = `
             <button class="geolocation-btn round-btn" title="Mi ubicación">
               <span class="geolocation-icon">📍</span>
             </button>
           `
-          
+
           const button = container.querySelector('button')
           button.addEventListener('click', () => {
             if (navigator.geolocation) {
@@ -585,7 +586,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
                 (position) => {
                   const { latitude, longitude } = position.coords
                   map.setView([latitude, longitude], 13)
-                  
+
                   // Add a temporary marker for user location
                   const userMarker = L.marker([latitude, longitude], {
                     icon: L.divIcon({
@@ -611,7 +612,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
                       iconAnchor: [10, 10]
                     })
                   }).addTo(map)
-                  
+
                   // Remove marker after 5 seconds
                   setTimeout(() => {
                     map.removeLayer(userMarker)
@@ -626,7 +627,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               alert('Tu navegador no soporta geolocalización.')
             }
           })
-          
+
           return container
         }
       })
@@ -637,7 +638,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       if (isSelectingLocation) {
         mapInstance.on('click', (e) => {
           const { lat, lng } = e.latlng
-          
+
           // Show temporary marker
           const tempMarker = L.marker([lat, lng], {
             icon: L.divIcon({
@@ -670,8 +671,8 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             closeButton: false,
             className: 'location-confirmation-popup'
           })
-          .setLatLng([lat, lng])
-          .setContent(`
+            .setLatLng([lat, lng])
+            .setContent(`
             <div style="text-align: center; padding: 15px; min-width: 200px;">
               <h4 style="margin: 0 0 15px 0; color: #2c3e50;">📍 Confirmar Ubicación</h4>
               <p style="margin: 0 0 15px 0; font-size: 14px; color: #34495e;">
@@ -710,34 +711,34 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               </div>
             </div>
           `)
-          .openOn(mapInstance)
+            .openOn(mapInstance)
 
           // Add event listeners to buttons
           setTimeout(() => {
             const confirmBtn = document.getElementById('confirm-location-btn')
             const cancelBtn = document.getElementById('cancel-location-btn')
-            
+
             if (confirmBtn) {
               confirmBtn.addEventListener('click', () => {
                 // Save coordinates and exit selection mode
                 setSelectedCoordinates([lat, lng])
                 setIsSelectingLocation(false)
-                
+
                 // Call the callback with the selected coordinates
                 if (locationSelectionCallback) {
                   locationSelectionCallback([lat, lng])
                   setLocationSelectionCallback(null)
                 }
-                
+
                 // Show form again after location selection
                 setIsFormOpen(true)
-                
+
                 // Close popup and remove marker
                 mapInstance.closePopup(confirmPopup)
                 mapInstance.removeLayer(tempMarker)
               })
             }
-            
+
             if (cancelBtn) {
               cancelBtn.addEventListener('click', () => {
                 // Close popup and remove marker
@@ -768,10 +769,10 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     if (mapInstanceRef.current && isSelectingLocation) {
       // Enable click events for location selection
       const map = mapInstanceRef.current
-      
+
       const handleMapClick = (e) => {
         const { lat, lng } = e.latlng
-        
+
         // Show temporary marker
         const tempMarker = L.marker([lat, lng], {
           icon: L.divIcon({
@@ -804,8 +805,8 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           closeButton: false,
           className: 'location-confirmation-popup'
         })
-        .setLatLng([lat, lng])
-        .setContent(`
+          .setLatLng([lat, lng])
+          .setContent(`
           <div style="text-align: center; padding: 15px; min-width: 200px;">
             <h4 style="margin: 0 0 15px 0; color: #2c3e50;">📍 Confirmar Ubicación</h4>
             <p style="margin: 0 0 15px 0; font-size: 14px; color: #34495e;">
@@ -844,34 +845,34 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             </div>
           </div>
         `)
-        .openOn(map)
+          .openOn(map)
 
         // Add event listeners to buttons
         setTimeout(() => {
           const confirmBtn = document.getElementById('confirm-location-btn')
           const cancelBtn = document.getElementById('cancel-location-btn')
-          
+
           if (confirmBtn) {
             confirmBtn.addEventListener('click', () => {
               // Save coordinates and exit selection mode
               setSelectedCoordinates([lat, lng])
               setIsSelectingLocation(false)
-              
+
               // Call the callback with the selected coordinates
               if (locationSelectionCallback) {
                 locationSelectionCallback([lat, lng])
                 setLocationSelectionCallback(null)
               }
-              
+
               // Show form again after location selection
               setIsFormOpen(true)
-              
+
               // Close popup and remove marker
               map.closePopup(confirmPopup)
               map.removeLayer(tempMarker)
             })
           }
-          
+
           if (cancelBtn) {
             cancelBtn.addEventListener('click', () => {
               // Close popup and remove marker
@@ -892,11 +893,11 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
   return (
     <div className="map-container">
-      <div 
-        ref={mapRef} 
+      <div
+        ref={mapRef}
         className={`map-viewport ${isSelectingLocation ? 'location-selection-mode' : ''}`}
       ></div>
-      
+
       {/* Location selection mode indicator */}
       {isSelectingLocation && (
         <div className="location-selection-overlay">
@@ -905,9 +906,9 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               <p>🗺️ <strong>Modo de Selección de Ubicación</strong></p>
               <p>Haga clic en el mapa para seleccionar la ubicación. Los datos del formulario se mantendrán.</p>
             </div>
-            <button 
-              type="button" 
-              className="btn-secondary location-cancel-btn" 
+            <button
+              type="button"
+              className="btn-secondary location-cancel-btn"
               onClick={() => handleLocationSelection(null)}
             >
               ← Cancelar Selección de Ubicación
@@ -915,7 +916,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           </div>
         </div>
       )}
-      
+
       <AddOrganizationForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
