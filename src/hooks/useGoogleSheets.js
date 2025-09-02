@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react'
 
-// Production URL (replace with deployed Apps Script URL)
-const GOOGLE_APPS_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || ''
-
 export const SHEET_NAMES = {
   HOSPITALS: 'Hospitales',
   ASSOCIATIONS: 'Asociaciones'
@@ -13,6 +10,9 @@ export const useGoogleSheets = (useTestMode = false) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [connected, setConnected] = useState(false)
+
+  const GOOGLE_APPS_SCRIPT_URL = useTestMode ? '' : import.meta.env.VITE_GOOGLE_SCRIPT_URL
+
 
   // Sample data for test mode
   const getSampleData = (sheetName) => {
