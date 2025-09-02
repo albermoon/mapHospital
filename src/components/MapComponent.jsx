@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
-import organizationsData from '../data/europeanOrganizations.json'
 import AddOrganizationForm from './AddOrganizationForm'
 import { createPortal } from 'react-dom'
 

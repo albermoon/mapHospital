@@ -2,7 +2,6 @@
 // Este hook ha sido limpiado de toda funcionalidad de APIs externas
 
 import { useState, useEffect } from 'react'
-import { LOCAL_CONFIG, SHEET_NAMES } from '../config/googleSheets.js'
 
 export const useGoogleSheets = () => {
   const [data, setData] = useState([])
