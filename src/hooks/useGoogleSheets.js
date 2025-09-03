@@ -77,37 +77,45 @@ export const useGoogleSheets = (useTestMode = false) => {
 
   // GET request to fetch data
   const fetchData = async (sheetName = SHEET_NAMES.HOSPITALS) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
       if (useTestMode) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setData(getSampleData(sheetName))
-        setConnected(false)
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setData(getSampleData(sheetName));
+        setConnected(false);
       } else {
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL)
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-        const result = await response.json()
-        if (result.status === 'error') throw new Error(result.message)
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
 
-        // Filter by sheet type (map sheet name to Type field)
-        const filteredData = result.data.filter(item => {
-          if (sheetName === SHEET_NAMES.HOSPITALS) return item.Type.toLowerCase() === 'hospital'
-          if (sheetName === SHEET_NAMES.ASSOCIATIONS) return item.Type.toLowerCase() === 'association' || item.Type.toLowerCase() === 'asociacion'
-          return false
-        })
+        console.log("API Response:", result); // Debug log
 
-        setData(filteredData)
-        setConnected(true)
+        if (result.status === 'error') throw new Error(result.message);
+
+        // Get the data from the response - it's now in result.data array
+        const responseData = result.data || [];
+        
+        // Filter based on sheet name (type)
+        const filteredData = responseData.filter(item => {
+          const itemType = (item.Type || "").toLowerCase();
+          if (sheetName === SHEET_NAMES.HOSPITALS) return itemType === 'hospital';
+          if (sheetName === SHEET_NAMES.ASSOCIATIONS) return itemType === 'association';
+          return false;
+        });
+
+        console.log("Filtered data:", filteredData); // Debug log
+        setData(filteredData);
+        setConnected(true);
       }
     } catch (err) {
-      setError(err.message)
-      setConnected(false)
-      setData([])
+      setError(err.message);
+      setConnected(false);
+      setData([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const saveData = async (newData) => {
     setLoading(true)
@@ -119,7 +127,10 @@ export const useGoogleSheets = (useTestMode = false) => {
         return { status: 'success', message: 'Test mode - not saved' }
       } else {
         const result = await callGoogleScript(newData)
-        if (result.status === 'success') setData(prev => [...prev, newData])
+        if (result.status === 'success') {
+          // Refresh data after saving
+          fetchData();
+        }
         return result
       }
     } catch (err) {
@@ -148,7 +159,11 @@ export const useGoogleSheets = (useTestMode = false) => {
     }
   }
 
-  useEffect(() => { fetchData() }, [useTestMode])
+  useEffect(() => { 
+    if (!useTestMode) {
+      fetchData(SHEET_NAMES.HOSPITALS); 
+    }
+  }, [useTestMode])
 
   return api
 }

@@ -16,68 +16,51 @@ function App() {
   // State for organizations - now derived from Google Sheets data
   const [organizations, setOrganizations] = useState([])
 
-  // Mock data (commented out but kept for reference)
-  /*
-  const mockOrganizations = [
-    {
-      id: 1,
-      name: "Hospital de Ejemplo",
-      type: "hospital",
-      address: "Calle Ejemplo 123, Madrid",
-      phone: "+34 123 456 789",
-      website: "https://ejemplo.com",
-      email: "info@ejemplo.com",
-      coordinates: [40.4168, -3.7038],
-      country: "España",
-      city: "Madrid",
-      specialty: "General",
-      status: 1
-    },
-    {
-      id: 2,
-      name: "Asociación de Ejemplo",
-      type: "association",
-      address: "Avenida Ejemplo 456, Madrid",
-      phone: "+34 987 654 321",
-      website: "https://asociacion-ejemplo.com",
-      email: "contacto@asociacion-ejemplo.com",
-      coordinates: [40.4168, -3.7038],
-      country: "España",
-      city: "Madrid",
-      specialty: "Salud",
-      status: 1
-    }
-  ]
-  */
-
   // Transform Google Sheets data to the format expected by MapComponent
   useEffect(() => {
-    if (data && data.length > 0) {
-      const transformedData = data.map(item => ({
-        id: item.ID || Date.now() + Math.random(), // Fallback ID if not present
-        name: item.Name,
-        type: item.Type.toLowerCase(),
-        address: item.Address,
-        phone: item.Phone,
-        website: item.Website,
-        email: item.Email,
-        coordinates: [parseFloat(item.Latitude), parseFloat(item.Longitude)],
-        country: item.Country,
-        city: item.City,
-        specialty: item.Specialty,
-        status: item.Status
-      })).filter(org => org.coordinates[0] && org.coordinates[1]) // Filter out items without valid coordinates
+    console.log("Raw data from API:", data); // Debug log
 
-      setOrganizations(transformedData)
+    if (data && Array.isArray(data) && data.length > 0) {
+      // The hook already returns the processed data array
+      const transformedData = data.map(item => {
+        let lat = parseFloat(item.Latitude);
+        let lng = parseFloat(item.Longitude);
+
+        // Check if coordinates are valid
+        if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+          console.warn('Invalid coordinates for item:', item);
+          return null;
+        }
+
+        return {
+          ID: item.ID || `ID_${Date.now()}_${Math.random()}`,
+          Name: item.Name,
+          Type: item.Type ? item.Type.toLowerCase() : 'hospital',
+          Address: item.Address || '',
+          Phone: item.Phone || '',
+          Website: item.Website || '',
+          Email: item.Email || '',
+          Latitude: lat,
+          Longitude: lng,
+          Country: item.Country || '',
+          City: item.City || '',
+          Specialty: item.Specialty || '',
+          Status: item.Status || 0
+        };
+      }).filter(org => org !== null);
+
+      console.log("Transformed data:", transformedData);
+      setOrganizations(transformedData);
     } else {
-      setOrganizations([])
+      console.log("No valid data found");
+      setOrganizations([]);
     }
-  }, [data])
+  }, [data]);
 
   // Fetch data when sheet changes
   useEffect(() => {
     fetchData(currentSheet)
-  }, [currentSheet])
+  }, [currentSheet, fetchData])
 
   const handleAddOrganization = async (organization) => {
     const newOrganization = { ...organization, id: Date.now() }
@@ -104,12 +87,8 @@ function App() {
       })
       console.log('Saved to Google Sheets!')
 
-      // Optionally refresh data to ensure sync
-      // fetchData(currentSheet)
-
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
-      // Revert optimistic update on error
       setOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
     }
   }
@@ -188,7 +167,7 @@ function App() {
           <div style={{
             position: 'fixed',
             top: '10px',
-            right: '400 px',
+            right: '400px', // Fixed the typo here (was '400 px')
             zIndex: 1000,
             backgroundColor: 'white',
             padding: '10px',
