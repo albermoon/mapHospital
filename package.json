@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
+    "cors": "^2.8.5",
     "crypto-browserify": "^3.12.1",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
     "googleapis": "^159.0.0",
     "leaflet": "^1.9.4",
+    "node-fetch": "^3.3.2",
     "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -31,5 +35,18 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "vite": "^5.0.8"
-  }
+  },
+  "description": "A React application built with Vite that displays an interactive map using Leaflet and OpenStreetMap, featuring hospital locations in New York City.",
+  "main": "vite.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/siscareCocoapp/mapHospital.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/siscareCocoapp/mapHospital/issues"
+  },
+  "homepage": "https://github.com/siscareCocoapp/mapHospital#readme"
 }

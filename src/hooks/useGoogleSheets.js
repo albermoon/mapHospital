@@ -1,137 +1,90 @@
-// HOOK LIMPIO - SIN APIS EXTERNAS
-// Este hook ha sido limpiado de toda funcionalidad de APIs externas
+import { useState, useCallback } from 'react'
 
-import { useState, useEffect } from 'react'
+// Sheet names as they exist in your Google Sheets
+export const SHEET_NAMES = {
+  ORGANIZACIONES: 'Organizaciones', // headers only
+  HOSPITALES: 'Hospitales',
+  ASOCIACIONES: 'Asociaciones'
+}
 
-export const useGoogleSheets = () => {
+export function useGoogleSheets(isTestMode = false) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [connected, setConnected] = useState(false)
 
-  // Simular datos de ejemplo
-  const getSampleData = (sheetName) => {
-    if (sheetName === SHEET_NAMES.HOSPITALS) {
-      return [
-        {
-          ID: 'ID_001',
-          Name: 'Hospital de Ejemplo',
-          Type: 'Hospital',
-          Address: 'Calle Ejemplo 123',
-          Phone: '+34 123 456 789',
-          Website: 'https://ejemplo.com',
-          Email: 'info@ejemplo.com',
-          Latitude: 40.4168,
-          Longitude: -3.7038,
-          Country: 'España',
-          City: 'Madrid',
-          Specialty: 'General',
-          Status: 1
-        }
-      ]
-    } else if (sheetName === SHEET_NAMES.ASSOCIATIONS) {
-      return [
-        {
-          ID: 'ID_002',
-          Name: 'Asociación de Ejemplo',
-          Type: 'Association',
-          Address: 'Avenida Ejemplo 456',
-          Phone: '+34 987 654 321',
-          Website: 'https://asociacion-ejemplo.com',
-          Email: 'contacto@asociacion-ejemplo.com',
-          Latitude: 40.4168,
-          Longitude: -3.7038,
-          Country: 'España',
-          City: 'Madrid',
-          Specialty: 'Salud',
-          Status: 1
-        }
-      ]
-    }
-    
-    return []
-  }
-
-  // Obtener datos (ahora retorna datos de ejemplo)
-  const fetchData = async (sheetName = SHEET_NAMES.HOSPITALS) => {
+  /**
+   * Fetch data from Google Apps Script (or sample data in test mode).
+   * Always returns the full dataset from the selected sheet.
+   */
+  const fetchData = useCallback(async (sheetName) => {
     setLoading(true)
     setError(null)
-    
+
     try {
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const sampleData = getSampleData(sheetName)
-      setData(sampleData)
-      setConnected(false) // Siempre false porque no hay conexión real
-      
+      let responseData
+
+      if (isTestMode) {
+        console.log(`📄 [TEST MODE] Loading sample data for sheet: ${sheetName}`)
+        responseData = sampleData[sheetName] || []
+      } else {
+        const res = await fetch(
+          `${import.meta.env.VITE_GOOGLE_SCRIPT_URL}?sheet=${sheetName}`,
+          { method: 'GET' }
+        )
+
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`)
+        }
+
+        const json = await res.json()
+        console.log("API Response:", json)
+
+        if (json.status === 'success') {
+          responseData = json.data || []
+          setConnected(true)
+        } else {
+          throw new Error(json.message || 'Unknown error from API')
+        }
+      }
+
+      setData(responseData)
     } catch (err) {
-      setError('Error al obtener datos de ejemplo')
-      setConnected(false)
+      console.error("❌ Fetch failed:", err)
+      setError(err.message)
+      setData([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [isTestMode])
 
-  // Guardar datos (ahora solo simula la operación)
-  const saveData = async (newData) => {
-    setLoading(true)
-    setError(null)
-    
+  /**
+   * Save data back to Google Apps Script.
+   */
+  const saveData = useCallback(async (organization) => {
     try {
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      console.log('Datos que se habrían guardado:', newData)
-      
-      // Simular éxito
-      setData(prevData => [...prevData, newData])
-      
-      return {
-        status: 'success',
-        message: 'Servicio en modo simulación - datos no guardados'
+      const res = await fetch(import.meta.env.VITE_GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(organization),
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`)
       }
-      
+
+      const json = await res.json()
+      console.log("Save response:", json)
+
+      if (json.status !== 'success') {
+        throw new Error(json.message || 'Save failed')
+      }
+
+      return json
     } catch (err) {
-      setError('Error al simular guardado de datos')
+      console.error("❌ Save failed:", err)
       throw err
-    } finally {
-      setLoading(false)
     }
-  }
-
-  // Verificar conexión (ahora siempre retorna false)
-  const testConnection = async () => {
-    setLoading(true)
-    
-    try {
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const result = {
-        connected: false,
-        message: 'Servicio limpiado - no hay conexión a APIs externas'
-      }
-      
-      setConnected(result.connected)
-      return result
-      
-    } catch (err) {
-      const result = {
-        connected: false,
-        message: 'Error al verificar conexión'
-      }
-      
-      setConnected(result.connected)
-      return result
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    fetchData()
   }, [])
 
   return {
@@ -140,8 +93,6 @@ export const useGoogleSheets = () => {
     error,
     connected,
     fetchData,
-    saveData,
-    testConnection
+    saveData
   }
 }
-
