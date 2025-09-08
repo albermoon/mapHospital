@@ -1,169 +1,98 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 
+// Sheet names as they exist in your Google Sheets
 export const SHEET_NAMES = {
-  HOSPITALS: 'Hospitales',
-  ASSOCIATIONS: 'Asociaciones'
+  ORGANIZACIONES: 'Organizaciones', // headers only
+  HOSPITALES: 'Hospitales',
+  ASOCIACIONES: 'Asociaciones'
 }
 
-export const useGoogleSheets = (useTestMode = false) => {
+export function useGoogleSheets(isTestMode = false) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [connected, setConnected] = useState(false)
 
-  const GOOGLE_APPS_SCRIPT_URL = useTestMode ? '' : import.meta.env.VITE_GOOGLE_SCRIPT_URL
-
-  // Sample data for test mode
-  const getSampleData = (sheetName) => {
-    if (sheetName === SHEET_NAMES.HOSPITALS) {
-      return [
-        {
-          ID: 'ID_001',
-          Name: 'Example Hospital',
-          Type: 'Hospital',
-          Address: 'Example Street 123',
-          Phone: '+34 123 456 789',
-          Website: 'https://example.com',
-          Email: 'info@example.com',
-          Latitude: 40.4168,
-          Longitude: -3.7038,
-          Country: 'España',
-          City: 'Madrid',
-          Specialty: 'General',
-          Status: 1
-        }
-      ]
-    } else if (sheetName === SHEET_NAMES.ASSOCIATIONS) {
-      return [
-        {
-          ID: 'ID_002',
-          Name: 'Example Association',
-          Type: 'Association',
-          Address: 'Example Avenue 456',
-          Phone: '+34 987 654 321',
-          Website: 'https://association-example.com',
-          Email: 'contact@association-example.com',
-          Latitude: 40.4168,
-          Longitude: -3.7038,
-          Country: 'España',
-          City: 'Madrid',
-          Specialty: 'Health',
-          Status: 1
-        }
-      ]
-    }
-    return []
-  }
-
-  // POST request to Google Script via proxy
-  const callGoogleScript = async (payload) => {
-    if (!GOOGLE_APPS_SCRIPT_URL) {
-      throw new Error('Google Apps Script URL not configured')
-    }
-
-    const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-
-    const result = await response.json()
-    if (result.status === 'error') throw new Error(result.message)
-
-    return result
-  }
-
-  // GET request to fetch data
-  const fetchData = async (sheetName = SHEET_NAMES.HOSPITALS) => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (useTestMode) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setData(getSampleData(sheetName));
-        setConnected(false);
-      } else {
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const result = await response.json();
-
-        console.log("API Response:", result); // Debug log
-
-        if (result.status === 'error') throw new Error(result.message);
-
-        // Get the data from the response - it's now in result.data array
-        const responseData = result.data || [];
-        
-        // Filter based on sheet name (type)
-        const filteredData = responseData.filter(item => {
-          const itemType = (item.Type || "").toLowerCase();
-          if (sheetName === SHEET_NAMES.HOSPITALS) return itemType === 'hospital';
-          if (sheetName === SHEET_NAMES.ASSOCIATIONS) return itemType === 'association';
-          return false;
-        });
-
-        console.log("Filtered data:", filteredData); // Debug log
-        setData(filteredData);
-        setConnected(true);
-      }
-    } catch (err) {
-      setError(err.message);
-      setConnected(false);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveData = async (newData) => {
+  /**
+   * Fetch data from Google Apps Script (or sample data in test mode).
+   * Always returns the full dataset from the selected sheet.
+   */
+  const fetchData = useCallback(async (sheetName) => {
     setLoading(true)
     setError(null)
+
     try {
-      if (useTestMode) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setData(prev => [...prev, newData])
-        return { status: 'success', message: 'Test mode - not saved' }
+      let responseData
+
+      if (isTestMode) {
+        console.log(`📄 [TEST MODE] Loading sample data for sheet: ${sheetName}`)
+        responseData = sampleData[sheetName] || []
       } else {
-        const result = await callGoogleScript(newData)
-        if (result.status === 'success') {
-          // Refresh data after saving
-          fetchData();
+        const res = await fetch(
+          `${import.meta.env.VITE_GOOGLE_SCRIPT_URL}?sheet=${sheetName}`,
+          { method: 'GET' }
+        )
+
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`)
         }
-        return result
+
+        const json = await res.json()
+        console.log("API Response:", json)
+
+        if (json.status === 'success') {
+          responseData = json.data || []
+          setConnected(true)
+        } else {
+          throw new Error(json.message || 'Unknown error from API')
+        }
       }
+
+      setData(responseData)
     } catch (err) {
+      console.error("❌ Fetch failed:", err)
       setError(err.message)
-      throw err
+      setData([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [isTestMode])
 
-  // Hook API
-  const api = {
+  /**
+   * Save data back to Google Apps Script.
+   */
+  const saveData = useCallback(async (organization) => {
+    try {
+      const res = await fetch(import.meta.env.VITE_GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(organization),
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`)
+      }
+
+      const json = await res.json()
+      console.log("Save response:", json)
+
+      if (json.status !== 'success') {
+        throw new Error(json.message || 'Save failed')
+      }
+
+      return json
+    } catch (err) {
+      console.error("❌ Save failed:", err)
+      throw err
+    }
+  }, [])
+
+  return {
     data,
     loading,
     error,
     connected,
     fetchData,
-    saveData,
-    useTestMode
+    saveData
   }
-
-  if (useTestMode) {
-    api.testConnection = async () => {
-      await new Promise(r => setTimeout(r, 500))
-      return { connected: false, message: 'Test mode - no real connection' }
-    }
-  }
-
-  useEffect(() => { 
-    if (!useTestMode) {
-      fetchData(SHEET_NAMES.HOSPITALS); 
-    }
-  }, [useTestMode])
-
-  return api
 }

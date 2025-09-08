@@ -9,6 +9,7 @@ const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 function App() {
   const [showTester, setShowTester] = useState(false)
   const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALS)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // Hook to handle Google Sheets
   const { data, loading, error, connected, fetchData, saveData } = useGoogleSheets(IS_TEST_MODE)
@@ -16,38 +17,63 @@ function App() {
   // State for organizations - now derived from Google Sheets data
   const [organizations, setOrganizations] = useState([])
 
-  // Transform Google Sheets data to the format expected by MapComponent
+  // Fetch data on initial load and when sheet changes
   useEffect(() => {
-    console.log("Raw data from API:", data); // Debug log
+    const loadData = async () => {
+      try {
+        await fetchData(currentSheet)
+        setIsInitialLoad(false)
+      } catch (err) {
+        console.error('Failed to fetch data:', err)
+      }
+    }
+
+    loadData()
+  }, [currentSheet, fetchData])
+
+  useEffect(() => {
+    console.log("Raw data from API:", data);
 
     if (data && Array.isArray(data) && data.length > 0) {
-      // The hook already returns the processed data array
-      const transformedData = data.map(item => {
-        let lat = parseFloat(item.Latitude);
-        let lng = parseFloat(item.Longitude);
+      const transformedData = data
+        .map(item => {
+          let lat = parseFloat(item.Latitude);
+          let lng = parseFloat(item.Longitude);
 
-        // Check if coordinates are valid
-        if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-          console.warn('Invalid coordinates for item:', item);
-          return null;
-        }
+          // Check if coordinates are valid
+          if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+            console.warn('Invalid coordinates for item:', item);
+            return null;
+          }
 
-        return {
-          ID: item.ID || `ID_${Date.now()}_${Math.random()}`,
-          Name: item.Name,
-          Type: item.Type ? item.Type.toLowerCase() : 'hospital',
-          Address: item.Address || '',
-          Phone: item.Phone || '',
-          Website: item.Website || '',
-          Email: item.Email || '',
-          Latitude: lat,
-          Longitude: lng,
-          Country: item.Country || '',
-          City: item.City || '',
-          Specialty: item.Specialty || '',
-          Status: item.Status || 0
-        };
-      }).filter(org => org !== null);
+          // Normalize type
+          let type = (item.Type || '').trim().toLowerCase();
+
+          if (['hospital', 'hospitales'].includes(type)) {
+            type = 'hospital';
+          } else if (['association', 'associations', 'asociación', 'asociacion'].includes(type)) {
+            type = 'association';
+          } else {
+            console.warn('Unknown organization type, keeping raw value:', item.Type);
+            type = type || 'hospital'; // fallback only if empty
+          }
+
+          return {
+            id: item.ID || `ID_${Date.now()}_${Math.random()}`,
+            name: item.Name,
+            type: type,
+            address: item.Address || '',
+            phone: item.Phone || '',
+            website: item.Website || '',
+            email: item.Email || '',
+            coordinates: [lat, lng],
+            country: item.Country || '',
+            city: item.City || '',
+            specialty: item.Specialty || '',
+            status: item.Status || 0
+          };
+        })
+        .filter(org => org !== null);
 
       console.log("Transformed data:", transformedData);
       setOrganizations(transformedData);
@@ -57,10 +83,6 @@ function App() {
     }
   }, [data]);
 
-  // Fetch data when sheet changes
-  useEffect(() => {
-    fetchData(currentSheet)
-  }, [currentSheet, fetchData])
 
   const handleAddOrganization = async (organization) => {
     const newOrganization = { ...organization, id: Date.now() }
@@ -97,8 +119,8 @@ function App() {
     setCurrentSheet(sheetName)
   }
 
-  // Show loading or error states
-  if (loading && organizations.length === 0) {
+  // Show loading only on initial load
+  if (isInitialLoad && organizations.length === 0) {
     return (
       <div className="App">
         <div style={{
@@ -117,6 +139,7 @@ function App() {
     )
   }
 
+  // Show error state
   if (error && organizations.length === 0) {
     return (
       <div className="App">
@@ -167,7 +190,7 @@ function App() {
           <div style={{
             position: 'fixed',
             top: '10px',
-            right: '400px', // Fixed the typo here (was '400 px')
+            right: '400px',
             zIndex: 1000,
             backgroundColor: 'white',
             padding: '10px',
@@ -197,7 +220,7 @@ function App() {
           <MapComponent
             organizations={organizations}
             onAddOrganization={handleAddOrganization}
-            loading={loading}
+            loading={loading && organizations.length === 0}
             error={error}
           />
         </main>

@@ -25,36 +25,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const [showAssociations, setShowAssociations] = useState(true);
   const [visibleCounts, setVisibleCounts] = useState({ hospitals: 0, associations: 0 });
 
-  // Normalize organizations data
-  const normalizeOrganizations = useCallback((rawData) => {
-    if (!rawData || !Array.isArray(rawData)) return [];
-
-    return rawData.map(item => {
-      const lat = parseFloat(item.Latitude || item.lat);
-      const lng = parseFloat(item.Longitude || item.lng);
-
-      if (isNaN(lat) || isNaN(lng)) {
-        console.warn(`Skipping ${item.Name || 'unknown'} - invalid coordinates`);
-        return null;
-      }
-
-      return {
-        id: item.ID || `ID_${Date.now()}_${Math.random()}`,
-        name: item.Name || item.nombre || 'Unknown Organization',
-        type: (item.Type || '').toLowerCase(),
-        address: item.Address || item.direccion || '',
-        phone: item.Phone || item.teléfono || '',
-        website: item.Website || '',
-        email: item.Email || '',
-        coordinates: [lat, lng],
-        country: item.Country || item.pais || '',
-        city: item.City || item.ciudad || '',
-        specialty: item.Specialty || item.especialidad || '',
-        status: item.Status || item.estado || 0
-      };
-    }).filter(org => org !== null);
-  }, []);
-
   // Update markers on the map
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return;
@@ -66,13 +36,20 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       if (layer instanceof L.Marker) map.removeLayer(layer);
     });
 
+    console.log("Creating markers for filtered organizations:", filteredOrganizations); // Debug log
+
     // Add markers for filtered organizations
     const isMobile = window.innerWidth <= 768;
     const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon;
     const associationIconToUse = isMobile ? associationIconMobile : associationIcon;
 
     filteredOrganizations.forEach(org => {
-      if (!org.coordinates || org.coordinates.length !== 2) return;
+      if (!org.coordinates || org.coordinates.length !== 2) {
+        console.warn('Invalid coordinates for org:', org);
+        return;
+      }
+
+      console.log(`Creating marker for: ${org.name} (Type: ${org.type})`); // Debug log
 
       const icon = org.type === 'hospital' ? hospitalIconToUse : associationIconToUse;
 
@@ -108,7 +85,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     });
   }, [filteredOrganizations]);
 
-  // Update filter counts and UI
   const updateFilterUI = useCallback(() => {
     if (!mapInstanceRef.current) return;
 
@@ -120,11 +96,11 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       associations: showAssociations ? associationCount : 0
     });
 
-    // Update filter control text
+    // Update filter control text safely
     const filterPanel = document.querySelector('#filter-panel');
     if (filterPanel) {
-      const hospitalText = filterPanel.querySelector('.filter-text:nth-of-type(1)');
-      const associationText = filterPanel.querySelector('.filter-text:nth-of-type(2)');
+      const hospitalText = filterPanel.querySelector('#hospital-filter')?.closest('.filter-item')?.querySelector('.filter-text');
+      const associationText = filterPanel.querySelector('#association-filter')?.closest('.filter-item')?.querySelector('.filter-text');
 
       if (hospitalText) {
         hospitalText.textContent = `Hospitales (${showHospitals ? hospitalCount : 0}/${hospitalCount})`;
@@ -146,13 +122,21 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     }
   }, [organizations, showHospitals, showAssociations]);
 
+
+
   // Filter organizations based on toggle states
   useEffect(() => {
+    console.log("All organizations:", organizations); // Debug log
+    console.log("Show hospitals:", showHospitals, "Show associations:", showAssociations); // Debug log
+
     const filtered = organizations.filter(org => {
+      const show = true;
       if (org.type === 'hospital' && !showHospitals) return false;
       if (org.type === 'association' && !showAssociations) return false;
       return true;
     });
+
+    console.log("Filtered organizations:", filtered); // Debug log
     setFilteredOrganizations(filtered);
   }, [organizations, showHospitals, showAssociations]);
 
@@ -162,45 +146,46 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     updateFilterUI();
   }, [filteredOrganizations, updateMarkers, updateFilterUI]);
 
-  // Initialize organizations from props
+  // Initialize organizations from props (no normalization needed - data is already processed)
   useEffect(() => {
+    console.log("Organizations received from props:", propOrganizations); // Debug log
+
     if (propOrganizations && propOrganizations.length > 0) {
-      const normalized = normalizeOrganizations(propOrganizations)
-      setOrganizations(normalized)
-      setFilteredOrganizations(normalized)
+      setOrganizations(propOrganizations);
+      setFilteredOrganizations(propOrganizations);
     } else {
-      setOrganizations([])
-      setFilteredOrganizations([])
+      setOrganizations([]);
+      setFilteredOrganizations([]);
     }
-  }, [propOrganizations, normalizeOrganizations])
+  }, [propOrganizations]);
 
   // Handle location selection
   const handleLocationSelection = (callback) => {
     if (callback === null) {
-      setIsSelectingLocation(false)
-      setLocationSelectionCallback(null)
-      setSelectedCoordinates(null)
+      setIsSelectingLocation(false);
+      setLocationSelectionCallback(null);
+      setSelectedCoordinates(null);
     } else {
-      setIsSelectingLocation(true)
-      setLocationSelectionCallback(() => callback)
-      setIsFormOpen(false)
+      setIsSelectingLocation(true);
+      setLocationSelectionCallback(() => callback);
+      setIsFormOpen(false);
     }
-  }
+  };
 
   // Handle adding a new organization
   const handleAddOrganization = (newOrg) => {
     if (onAddOrganization) {
-      onAddOrganization(newOrg)
+      onAddOrganization(newOrg);
     } else {
-      setOrganizations(prev => [...prev, newOrg])
-      setFilteredOrganizations(prev => [...prev, newOrg])
+      setOrganizations(prev => [...prev, newOrg]);
+      setFilteredOrganizations(prev => [...prev, newOrg]);
     }
 
     if (map) {
-      const isMobile = window.innerWidth <= 768
+      const isMobile = window.innerWidth <= 768;
       const icon = newOrg.type === 'hospital' ?
         (isMobile ? hospitalIconMobile : hospitalIcon) :
-        (isMobile ? associationIconMobile : associationIcon)
+        (isMobile ? associationIconMobile : associationIcon);
 
       const popupContent = `
         <div class="organization-popup">
@@ -226,24 +211,24 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             <strong>✉️ Email:</strong> ${newOrg.email || 'No disponible'}
           </p>
         </div>
-      `
+      `;
       L.marker(newOrg.coordinates, { icon })
         .addTo(map)
-        .bindPopup(popupContent, { maxWidth: 300 })
+        .bindPopup(popupContent, { maxWidth: 300 });
     }
-  }
+  };
 
   // Initialize map
   useEffect(() => {
     if (mapRef.current && !mapInstanceRef.current) {
-      const mapInstance = L.map(mapRef.current, { zoomControl: false }).setView([50.8503, 4.3517], 5)
+      const mapInstance = L.map(mapRef.current, { zoomControl: false }).setView([50.8503, 4.3517], 5);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(mapInstance)
+      }).addTo(mapInstance);
 
-      mapInstanceRef.current = mapInstance
-      setMap(mapInstance)
+      mapInstanceRef.current = mapInstance;
+      setMap(mapInstance);
 
       // Add filter control
       const filterControl = L.Control.extend({
@@ -310,8 +295,8 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
       mapInstance.addControl(new filterControl());
 
-      // Add other controls (keep your existing address search, add organization, geolocation controls)...
-      // ... [rest of your map initialization code]
+      // Add other controls (address search, add organization, geolocation) here...
+      // ... [keep your existing control code]
 
       setMap(mapInstance);
     }
@@ -322,7 +307,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [organizations, showHospitals, showAssociations]);
 
   return (
     <div className="map-container">
@@ -359,7 +344,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         isLocationSelectionMode={isSelectingLocation}
       />
     </div>
-  )
-}
+  );
+};
 
-export default MapComponent
+export default MapComponent;
