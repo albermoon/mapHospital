@@ -3,6 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
+import { useTranslation } from '../utils/i18n'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -12,6 +13,7 @@ L.Icon.Default.mergeOptions({
 })
 
 const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization }) => {
+  const { t } = useTranslation()
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const [organizations, setOrganizations] = useState([])
@@ -292,7 +294,30 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           return container;
         }
       });
+      // Add organization control
+      const addControl = L.Control.extend({
+        options: {
+          position: 'bottomright'
+        },
+        onAdd: function (map) {
+          const container = L.DomUtil.create('div', 'add-control');
 
+          container.innerHTML = `
+      <button class="add-btn round-btn" title="Add Organization">
+        <span class="add-icon">+</span>
+      </button>
+    `;
+
+          const addButton = container.querySelector('.add-btn');
+          addButton.addEventListener('click', () => {
+            setIsFormOpen(true);
+          });
+
+          return container;
+        }
+      });
+
+      mapInstance.addControl(new addControl());
       mapInstance.addControl(new filterControl());
 
       // Add other controls (address search, add organization, geolocation) here...
@@ -320,15 +345,15 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         <div className="location-selection-overlay">
           <div className="location-selection-banner">
             <div className="location-instructions">
-              <p>🗺️ <strong>Modo de Selección de Ubicación</strong></p>
-              <p>Haga clic en el mapa para seleccionar la ubicación. Los datos del formulario se mantendrán.</p>
+              <p>🗺️ <strong>{t('locationSelectionMode')}</strong></p>
+              <p>{t('locationSelectionDescription')}</p>
             </div>
             <button
               type="button"
               className="btn-secondary location-cancel-btn"
               onClick={() => handleLocationSelection(null)}
             >
-              ← Cancelar Selección de Ubicación
+              ← {t('cancel')} {t('selectLocation')}
             </button>
           </div>
         </div>

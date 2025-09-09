@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import MapComponent from './components/MapComponent'
 import GoogleScriptTester from './test/GoogleScriptTester'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
+import LanguageSelector from './components/LanguageSelector'
+import { useTranslation } from './utils/i18n'
 import './App.css'
 
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
@@ -10,11 +12,12 @@ function App() {
   const [showTester, setShowTester] = useState(false)
   const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALS)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const { t } = useTranslation()
 
   // Hook to handle Google Sheets
   const { data, loading, error, connected, fetchData, saveData } = useGoogleSheets(IS_TEST_MODE)
 
-  // State for organizations - now derived from Google Sheets data
+  // State for organizations
   const [organizations, setOrganizations] = useState([])
 
   // Fetch data on initial load and when sheet changes
@@ -82,7 +85,6 @@ function App() {
       setOrganizations([]);
     }
   }, [data]);
-
 
   const handleAddOrganization = async (organization) => {
     const newOrganization = { ...organization, id: Date.now() }
@@ -165,6 +167,12 @@ function App() {
 
   return (
     <div className="App">
+      {/* Header with title and language selector */}
+      <header className="App-header">
+        <h1>{t('appTitle')}</h1>
+        <LanguageSelector />
+      </header>
+
       {IS_TEST_MODE && (
         <>
           <button

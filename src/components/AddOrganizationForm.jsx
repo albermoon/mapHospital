@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import './AddOrganizationForm.css'
 import MapSelector from './MapSelector'
+import { useTranslation } from '../utils/i18n'
 
 const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLocationSelection, selectedCoordinates, isLocationSelectionMode }) => {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     name: '',
     type: 'hospital',
@@ -27,7 +29,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
       ...prev,
       [name]: value
     }))
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -39,12 +41,12 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
   const validateForm = () => {
     const newErrors = {}
-    
-    if (!formData.name.trim()) newErrors.name = 'El nombre es obligatorio'
-    if (!formData.address.trim()) newErrors.address = 'La dirección es obligatoria'
-    if (!formData.country.trim()) newErrors.country = 'El país es obligatorio'
-    if (!formData.city.trim()) newErrors.city = 'La ciudad es obligatoria'
-    if (!formData.coordinates) newErrors.coordinates = 'Debe seleccionar una ubicación en el mapa'
+
+    if (!formData.name.trim()) newErrors.name = t('requiredField')
+    if (!formData.address.trim()) newErrors.address = t('requiredField')
+    if (!formData.country.trim()) newErrors.country = t('requiredField')
+    if (!formData.city.trim()) newErrors.city = t('requiredField')
+    if (!formData.coordinates) newErrors.coordinates = t('mustSelectLocation')
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -52,7 +54,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
 
     const newOrganization = {
@@ -93,7 +95,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
   const handleLocationSelect = (coordinates) => {
     console.log('Location selected. Updating form data with coordinates:', coordinates)
     console.log('Previous form data:', formData)
-    
+
     setFormData(prev => {
       const updatedData = {
         ...prev,
@@ -102,7 +104,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
       console.log('Updated form data:', updatedData)
       return updatedData
     })
-    
+
     // Exit location selection mode and return to form
     setIsSelectingLocation(false)
     // Notify parent to exit location selection mode
@@ -114,10 +116,10 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
   const handleStartLocationSelection = () => {
     // Store current form data before entering location selection mode
     console.log('Entering location selection mode. Current form data:', formData)
-    
+
     // Backup current form data to ensure it's not lost
     setFormDataBackup(formData)
-    
+
     setIsSelectingLocation(true)
     if (onStartLocationSelection) {
       onStartLocationSelection(handleLocationSelect)
@@ -127,12 +129,12 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
   const handleCancelLocationSelection = () => {
     // Exit location selection mode and return to form with all data preserved
     console.log('Canceling location selection. Restoring form data from backup:', formDataBackup)
-    
+
     // Restore form data from backup if available
     if (formDataBackup) {
       setFormData(formDataBackup)
     }
-    
+
     setIsSelectingLocation(false)
     if (onStartLocationSelection) {
       onStartLocationSelection(null)
@@ -144,7 +146,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
     if (selectedCoordinates) {
       console.log('Selected coordinates received from parent:', selectedCoordinates)
       console.log('Current form data before update:', formData)
-      
+
       setFormData(prev => {
         const updatedData = {
           ...prev,
@@ -153,7 +155,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
         console.log('Form data updated with coordinates:', updatedData)
         return updatedData
       })
-      
+
       // Exit location selection mode when coordinates are received
       setIsSelectingLocation(false)
       // Also notify parent to exit location selection mode
@@ -173,7 +175,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
       <div className="form-container" onClick={(e) => e.stopPropagation()}>
         <div className="form-header">
           <h2>
-            {isLocationSelectionMode ? '📍 Seleccionar Ubicación en el Mapa' : '➕ Añadir Nueva Organización'}
+            {isLocationSelectionMode ? `📍 ${t('selectLocation')}` : `➕ ${t('addOrganization')}`}
           </h2>
           <button className="close-btn" onClick={handleClose}>×</button>
         </div>
@@ -183,22 +185,22 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
           {isLocationSelectionMode && (
             <div className="location-selection-banner">
               <div className="location-instructions">
-                <p>🗺️ <strong>Modo de Selección de Ubicación</strong></p>
-                <p>Haga clic en el mapa principal para seleccionar la ubicación. Los datos del formulario se mantendrán.</p>
+                <p>🗺️ <strong>{t('locationSelectionMode')}</strong></p>
+                <p>{t('locationSelectionDescription')}</p>
               </div>
-              <button 
-                type="button" 
-                className="btn-secondary location-cancel-btn" 
+              <button
+                type="button"
+                className="btn-secondary location-cancel-btn"
                 onClick={handleCancelLocationSelection}
               >
-                ← Cancelar Selección de Ubicación
+                ← {t('cancel')} {t('selectLocation')}
               </button>
             </div>
           )}
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="type">Tipo de Organización *</label>
+              <label htmlFor="type">{t('selectOrganizationType')} *</label>
               <select
                 id="type"
                 name="type"
@@ -207,22 +209,22 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
                 className={errors.type ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               >
-                <option value="hospital">🏥 Hospital</option>
-                <option value="association">👥 Asociación de Pacientes</option>
+                <option value="hospital">🏥 {t('hospital')}</option>
+                <option value="association">👥 {t('association')}</option>
               </select>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="name">Nombre *</label>
+              <label htmlFor="name">{t('organizationName')} *</label>
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Nombre de la organización"
+                placeholder={t('organizationName')}
                 className={errors.name ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
@@ -232,14 +234,14 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="address">Dirección *</label>
+              <label htmlFor="address">{t('address')} *</label>
               <input
                 type="text"
                 id="address"
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                placeholder="Dirección completa"
+                placeholder={t('fullAddress')}
                 className={errors.address ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
@@ -249,28 +251,28 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="country">País *</label>
+              <label htmlFor="country">{t('country')} *</label>
               <input
                 type="text"
                 id="country"
                 name="country"
                 value={formData.country}
                 onChange={handleInputChange}
-                placeholder="País"
+                placeholder={t('country')}
                 className={errors.country ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
               {errors.country && <span className="error-message">{errors.country}</span>}
             </div>
             <div className="form-group">
-              <label htmlFor="city">Ciudad *</label>
+              <label htmlFor="city">{t('city')} *</label>
               <input
                 type="text"
                 id="city"
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
-                placeholder="Ciudad"
+                placeholder={t('city')}
                 className={errors.city ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
@@ -280,14 +282,14 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="specialty">Especialidad</label>
+              <label htmlFor="specialty">{t('specialty')}</label>
               <input
                 type="text"
                 id="specialty"
                 name="specialty"
                 value={formData.specialty}
                 onChange={handleInputChange}
-                placeholder="Especialidad de la organización"
+                placeholder={t('organizationSpecialty')}
                 className={errors.specialty ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
@@ -297,28 +299,28 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-row">
             <div className="form-group">
-              <label>Ubicación en el Mapa *</label>
+              <label>{t('selectLocation')} *</label>
               <div className="map-selector">
                 <div className="map-placeholder" onClick={handleStartLocationSelection}>
                   {formData.coordinates ? (
                     <div className="coordinates-display">
-                      <span>📍 Ubicación seleccionada:</span>
+                      <span>📍 {t('locationSelected')}:</span>
                       <strong>Lat: {formData.coordinates[0].toFixed(6)}, Lng: {formData.coordinates[1].toFixed(6)}</strong>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="change-location-btn"
                         onClick={(e) => {
                           e.stopPropagation()
                           setFormData(prev => ({ ...prev, coordinates: null }))
                         }}
                       >
-                        Cambiar ubicación
+                        {t('changeLocation')}
                       </button>
                     </div>
                   ) : (
                     <div className="map-instructions">
-                      <span>🗺️ Haga clic en el mapa para seleccionar la ubicación</span>
-                      <small>El mapa se abrirá al hacer clic aquí</small>
+                      <span>🗺️ {t('clickToSelectLocation')}</span>
+                      <small>{t('mapWillOpen')}</small>
                     </div>
                   )}
                 </div>
@@ -329,28 +331,28 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="phone">Teléfono</label>
+              <label htmlFor="phone">{t('phone')}</label>
               <input
                 type="tel"
                 id="phone"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="+34 91 123 45 67"
+                placeholder={t('phone')}
                 className={errors.phone ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
               {errors.phone && <span className="error-message">{errors.phone}</span>}
             </div>
             <div className="form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">{t('email')}</label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="info@organizacion.com"
+                placeholder={t('email')}
                 className={errors.email ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
@@ -360,14 +362,14 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="website">Página Web</label>
+              <label htmlFor="website">{t('website')}</label>
               <input
                 type="url"
                 id="website"
                 name="website"
                 value={formData.website}
                 onChange={handleInputChange}
-                placeholder="https://www.organizacion.com"
+                placeholder={t('website')}
                 className={errors.website ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
@@ -377,10 +379,10 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
 
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={handleClose}>
-              Cancelar
+              {t('cancel')}
             </button>
             <button type="submit" className="btn-primary" disabled={isLocationSelectionMode}>
-              ➕ Añadir Organización
+              ➕ {t('addOrganization')}
             </button>
           </div>
         </form>
