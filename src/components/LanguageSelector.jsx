@@ -20,6 +20,13 @@ const LanguageSelector = () => {
       >
         EN
       </button>
+      <button
+        className={`language-btn ${currentLocale === 'fr' ? 'active' : ''}`}
+        onClick={() => changeLanguage('fr')}
+        title="French"
+      >
+        FR
+      </button>
     </div>
   )
 }

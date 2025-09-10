@@ -3,6 +3,7 @@ import MapComponent from './components/MapComponent'
 import GoogleScriptTester from './test/GoogleScriptTester'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
 import LanguageSelector from './components/LanguageSelector'
+import GoogleSheetsStatus from './components/GoogleSheetsStatus'
 import { useTranslation } from './utils/i18n'
 import './App.css'
 
@@ -19,6 +20,7 @@ function App() {
 
   // State for organizations
   const [organizations, setOrganizations] = useState([])
+  const [localOrganizations, setLocalOrganizations] = useState([])
 
   // Fetch data on initial load and when sheet changes
   useEffect(() => {
@@ -34,9 +36,8 @@ function App() {
     loadData()
   }, [currentSheet, fetchData])
 
+  // Transform data from Google Sheets to organization format
   useEffect(() => {
-    console.log("Raw data from API:", data);
-
     if (data && Array.isArray(data) && data.length > 0) {
       const transformedData = data
         .map(item => {
@@ -87,15 +88,20 @@ function App() {
   }, [data]);
 
   const handleAddOrganization = async (organization) => {
-    const newOrganization = { ...organization, id: Date.now() }
+    const newOrganization = {
+      ...organization,
+      id: `ID_${Date.now()}_${Math.random()}`
+    }
 
-    // Optimistically update local state
+    // Add to local state
+    setLocalOrganizations(prev => [...prev, newOrganization])
     setOrganizations(prev => [...prev, newOrganization])
+
     console.log('Local add:', newOrganization)
 
     try {
       await saveData({
-        ID: `ID_${Date.now()}`,
+        ID: newOrganization.id,
         Name: newOrganization.name,
         Type: newOrganization.type,
         Address: newOrganization.address,
@@ -110,15 +116,23 @@ function App() {
         Status: 1
       })
       console.log('Saved to Google Sheets!')
-
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
+      // Revert local changes if save fails
+      setLocalOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
       setOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
     }
   }
 
   const handleSheetChange = (sheetName) => {
     setCurrentSheet(sheetName)
+  }
+
+  const handleSyncWithLocal = (localOrgs) => {
+    // Implement synchronization logic here
+    console.log("Syncing local organizations:", localOrgs);
+    // This would typically send local organizations to Google Sheets
+    alert("Sync functionality would be implemented here");
   }
 
   // Show loading only on initial load
@@ -225,6 +239,12 @@ function App() {
         <GoogleScriptTester />
       ) : (
         <main>
+          <GoogleSheetsStatus
+            loading={loading}
+            error={error}
+            onSyncWithLocal={handleSyncWithLocal}
+            localOrganizations={localOrganizations}
+          />
           <MapComponent
             organizations={organizations}
             onAddOrganization={handleAddOrganization}

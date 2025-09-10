@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import './AddOrganizationForm.css'
-import MapSelector from './MapSelector'
 import { useTranslation } from '../utils/i18n'
 
-const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLocationSelection, selectedCoordinates, isLocationSelectionMode }) => {
+const AddOrganizationForm = ({
+  isOpen,
+  onClose,
+  onAdd,
+  organizations,
+  onStartLocationSelection,
+  selectedCoordinates,
+  isLocationSelectionMode
+}) => {
   const { t } = useTranslation()
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'hospital',
@@ -19,26 +27,20 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
   })
 
   const [errors, setErrors] = useState({})
-  const [isMapSelectorOpen, setIsMapSelectorOpen] = useState(false)
-  const [isSelectingLocation, setIsSelectingLocation] = useState(false)
   const [formDataBackup, setFormDataBackup] = useState(null)
 
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }))
+      setErrors(prev => ({ ...prev, [name]: '' }))
     }
   }
 
+  // Validate form
   const validateForm = () => {
     const newErrors = {}
 
@@ -48,10 +50,19 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
     if (!formData.city.trim()) newErrors.city = t('requiredField')
     if (!formData.coordinates) newErrors.coordinates = t('mustSelectLocation')
 
+    if (formData.email && !formData.email.includes('@')) {
+      newErrors.email = t('invalidEmail')
+    }
+
+    if (formData.website && !formData.website.startsWith('http')) {
+      newErrors.website = t('invalidWebsite')
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
+  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault()
 
@@ -75,6 +86,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
     handleClose()
   }
 
+  // Close form and reset
   const handleClose = () => {
     setFormData({
       name: '',
@@ -92,73 +104,46 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
     onClose()
   }
 
-  const handleLocationSelect = (coordinates) => {
-    console.log('Location selected. Updating form data with coordinates:', coordinates)
-    console.log('Previous form data:', formData)
-
-    setFormData(prev => {
-      const updatedData = {
-        ...prev,
-        coordinates
-      }
-      console.log('Updated form data:', updatedData)
-      return updatedData
-    })
-
-    // Exit location selection mode and return to form
-    setIsSelectingLocation(false)
-    // Notify parent to exit location selection mode
-    if (onStartLocationSelection) {
-      onStartLocationSelection(null)
-    }
-  }
-
+  // Start location selection
   const handleStartLocationSelection = () => {
-    // Store current form data before entering location selection mode
-    console.log('Entering location selection mode. Current form data:', formData)
-
-    // Backup current form data to ensure it's not lost
     setFormDataBackup(formData)
 
-    setIsSelectingLocation(true)
     if (onStartLocationSelection) {
       onStartLocationSelection(handleLocationSelect)
     }
   }
 
-  const handleCancelLocationSelection = () => {
-    // Exit location selection mode and return to form with all data preserved
-    console.log('Canceling location selection. Restoring form data from backup:', formDataBackup)
+  // Handle location selection callback
+  const handleLocationSelect = (coordinates) => {
+    setFormData(prev => ({
+      ...prev,
+      coordinates
+    }))
 
-    // Restore form data from backup if available
-    if (formDataBackup) {
-      setFormData(formDataBackup)
-    }
-
-    setIsSelectingLocation(false)
     if (onStartLocationSelection) {
       onStartLocationSelection(null)
     }
   }
 
-  // Update form data when coordinates are selected
+  // Cancel location selection
+  const handleCancelLocationSelection = () => {
+    if (formDataBackup) {
+      setFormData(formDataBackup)
+    }
+
+    if (onStartLocationSelection) {
+      onStartLocationSelection(null)
+    }
+  }
+
+  // Update coordinates when received from parent
   useEffect(() => {
     if (selectedCoordinates) {
-      console.log('Selected coordinates received from parent:', selectedCoordinates)
-      console.log('Current form data before update:', formData)
+      setFormData(prev => ({
+        ...prev,
+        coordinates: selectedCoordinates
+      }))
 
-      setFormData(prev => {
-        const updatedData = {
-          ...prev,
-          coordinates: selectedCoordinates
-        }
-        console.log('Form data updated with coordinates:', updatedData)
-        return updatedData
-      })
-
-      // Exit location selection mode when coordinates are received
-      setIsSelectingLocation(false)
-      // Also notify parent to exit location selection mode
       if (onStartLocationSelection) {
         onStartLocationSelection(null)
       }
@@ -166,9 +151,6 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
   }, [selectedCoordinates, onStartLocationSelection])
 
   if (!isOpen) return null
-
-  // Debug log to show current form data
-  console.log('Form rendering with data:', formData, 'Location mode:', isLocationSelectionMode)
 
   return (
     <div className="form-overlay" onClick={handleClose}>
@@ -181,12 +163,13 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
         </div>
 
         <form onSubmit={handleSubmit} className="add-form">
-          {/* Location selection instructions - shown when in location selection mode */}
+          {/* Location selection banner */}
           {isLocationSelectionMode && (
             <div className="location-selection-banner">
               <div className="location-instructions">
-                <p>🗺️ <strong>{t('locationSelectionMode')}</strong></p>
+                <p><strong>{t('locationSelectionMode')}</strong></p>
                 <p>{t('locationSelectionDescription')}</p>
+                <p><small>{t('clickMapToSelect')}</small></p>
               </div>
               <button
                 type="button"
@@ -198,6 +181,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           )}
 
+          {/* Organization Type */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="type">{t('selectOrganizationType')} *</label>
@@ -215,6 +199,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Organization Name */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="name">{t('organizationName')} *</label>
@@ -232,6 +217,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Address */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="address">{t('address')} *</label>
@@ -249,6 +235,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Country and City */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="country">{t('country')} *</label>
@@ -280,6 +267,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Specialty */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="specialty">{t('specialty')}</label>
@@ -290,13 +278,12 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
                 value={formData.specialty}
                 onChange={handleInputChange}
                 placeholder={t('organizationSpecialty')}
-                className={errors.specialty ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
-              {errors.specialty && <span className="error-message">{errors.specialty}</span>}
             </div>
           </div>
 
+          {/* Location Selector */}
           <div className="form-row">
             <div className="form-group">
               <label>{t('selectLocation')} *</label>
@@ -305,7 +292,10 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
                   {formData.coordinates ? (
                     <div className="coordinates-display">
                       <span>📍 {t('locationSelected')}:</span>
-                      <strong>Lat: {formData.coordinates[0].toFixed(6)}, Lng: {formData.coordinates[1].toFixed(6)}</strong>
+                      <strong>
+                        Lat: {formData.coordinates[0].toFixed(6)},
+                        Lng: {formData.coordinates[1].toFixed(6)}
+                      </strong>
                       <button
                         type="button"
                         className="change-location-btn"
@@ -329,6 +319,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Contact Information */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="phone">{t('phone')}</label>
@@ -339,10 +330,8 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder={t('phone')}
-                className={errors.phone ? 'error' : ''}
                 disabled={isLocationSelectionMode}
               />
-              {errors.phone && <span className="error-message">{errors.phone}</span>}
             </div>
             <div className="form-group">
               <label htmlFor="email">{t('email')}</label>
@@ -360,6 +349,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Website */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="website">{t('website')}</label>
@@ -377,6 +367,7 @@ const AddOrganizationForm = ({ isOpen, onClose, onAdd, organizations, onStartLoc
             </div>
           </div>
 
+          {/* Form Actions */}
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={handleClose}>
               {t('cancel')}

@@ -3,8 +3,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
+import SearchControl from './SearchControl'
 import { useTranslation } from '../utils/i18n'
 
+// Fix for default Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -16,6 +18,10 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const { t } = useTranslation()
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
+  const markerRef = useRef(null)
+  const markersRef = useRef([])
+  const filterControlRef = useRef(null)
+
   const [organizations, setOrganizations] = useState([])
   const [filteredOrganizations, setFilteredOrganizations] = useState([])
   const [map, setMap] = useState(null)
@@ -23,334 +29,421 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const [isSelectingLocation, setIsSelectingLocation] = useState(false)
   const [locationSelectionCallback, setLocationSelectionCallback] = useState(null)
   const [selectedCoordinates, setSelectedCoordinates] = useState(null)
-  const [showHospitals, setShowHospitals] = useState(true);
-  const [showAssociations, setShowAssociations] = useState(true);
-  const [visibleCounts, setVisibleCounts] = useState({ hospitals: 0, associations: 0 });
+  const [showHospitals, setShowHospitals] = useState(true)
+  const [showAssociations, setShowAssociations] = useState(true)
+  const [filterPanelExpanded, setFilterPanelExpanded] = useState(false)
 
-  // Update markers on the map
-  const updateMarkers = useCallback(() => {
-    if (!mapInstanceRef.current) return;
-
-    const map = mapInstanceRef.current;
-
-    // Remove all existing markers
-    map.eachLayer(layer => {
-      if (layer instanceof L.Marker) map.removeLayer(layer);
-    });
-
-    console.log("Creating markers for filtered organizations:", filteredOrganizations); // Debug log
-
-    // Add markers for filtered organizations
-    const isMobile = window.innerWidth <= 768;
-    const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon;
-    const associationIconToUse = isMobile ? associationIconMobile : associationIcon;
-
-    filteredOrganizations.forEach(org => {
-      if (!org.coordinates || org.coordinates.length !== 2) {
-        console.warn('Invalid coordinates for org:', org);
-        return;
-      }
-
-      console.log(`Creating marker for: ${org.name} (Type: ${org.type})`); // Debug log
-
-      const icon = org.type === 'hospital' ? hospitalIconToUse : associationIconToUse;
-
-      const popupContent = `
-        <div class="organization-popup">
-          <h3 style="margin: 0 0 10px 0; color: ${org.type === 'hospital' ? '#dc3545' : '#007bff'}">
-            ${org.name}
-          </h3>
-          <p style="margin: 5px 0; font-size: 12px; color: #666;">
-            <strong>Tipo:</strong> ${org.type === 'hospital' ? '🏥 Hospital' : '👥 Asociación de Pacientes'}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>📍 Dirección:</strong><br>
-            <a href="#" class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" style="color: #007bff; text-decoration: none; cursor: pointer;">
-              ${org.address}
-            </a>
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>📞 Teléfono:</strong> ${org.phone}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>🌐 Web:</strong> ${org.website ? `<a href="${org.website}" target="_blank">${org.website}</a>` : 'No disponible'}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>✉️ Email:</strong> ${org.email}
-          </p>
-        </div>
-      `;
-
-      L.marker(org.coordinates, { icon })
-        .addTo(map)
-        .bindPopup(popupContent, { maxWidth: 300 });
-    });
-  }, [filteredOrganizations]);
-
-  const updateFilterUI = useCallback(() => {
-    if (!mapInstanceRef.current) return;
-
-    const hospitalCount = organizations.filter(org => org.type === 'hospital').length;
-    const associationCount = organizations.filter(org => org.type === 'association').length;
-
-    setVisibleCounts({
-      hospitals: showHospitals ? hospitalCount : 0,
-      associations: showAssociations ? associationCount : 0
-    });
-
-    // Update filter control text safely
-    const filterPanel = document.querySelector('#filter-panel');
-    if (filterPanel) {
-      const hospitalText = filterPanel.querySelector('#hospital-filter')?.closest('.filter-item')?.querySelector('.filter-text');
-      const associationText = filterPanel.querySelector('#association-filter')?.closest('.filter-item')?.querySelector('.filter-text');
-
-      if (hospitalText) {
-        hospitalText.textContent = `Hospitales (${showHospitals ? hospitalCount : 0}/${hospitalCount})`;
-      }
-      if (associationText) {
-        associationText.textContent = `Asociaciones (${showAssociations ? associationCount : 0}/${associationCount})`;
-      }
-
-      // Update checkbox states
-      const hospitalCheckbox = filterPanel.querySelector('#hospital-filter');
-      const associationCheckbox = filterPanel.querySelector('#association-filter');
-
-      if (hospitalCheckbox) {
-        hospitalCheckbox.checked = showHospitals;
-      }
-      if (associationCheckbox) {
-        associationCheckbox.checked = showAssociations;
-      }
+  // Initialize organizations from props
+  useEffect(() => {
+    if (propOrganizations && propOrganizations.length > 0) {
+      setOrganizations(propOrganizations)
+      setFilteredOrganizations(propOrganizations)
+    } else {
+      setOrganizations([])
+      setFilteredOrganizations([])
     }
-  }, [organizations, showHospitals, showAssociations]);
-
-
+  }, [propOrganizations])
 
   // Filter organizations based on toggle states
   useEffect(() => {
-    console.log("All organizations:", organizations); // Debug log
-    console.log("Show hospitals:", showHospitals, "Show associations:", showAssociations); // Debug log
-
     const filtered = organizations.filter(org => {
-      const show = true;
-      if (org.type === 'hospital' && !showHospitals) return false;
-      if (org.type === 'association' && !showAssociations) return false;
-      return true;
-    });
+      if (org.type === 'hospital' && !showHospitals) return false
+      if (org.type === 'association' && !showAssociations) return false
+      return true
+    })
+    setFilteredOrganizations(filtered)
+  }, [organizations, showHospitals, showAssociations])
 
-    console.log("Filtered organizations:", filtered); // Debug log
-    setFilteredOrganizations(filtered);
-  }, [organizations, showHospitals, showAssociations]);
+  // Update filter counts when organizations change
+  useEffect(() => {
+    if (filterControlRef.current) {
+      updateFilterCounts();
+    }
+  }, [organizations]);
+
+  // Function to update filter counts
+  const updateFilterCounts = useCallback(() => {
+    const hospitalCount = organizations.filter(org => org.type === 'hospital').length;
+    const associationCount = organizations.filter(org => org.type === 'association').length;
+
+    // Update the DOM elements directly
+    const hospitalFilter = document.getElementById('hospital-filter');
+    const associationFilter = document.getElementById('association-filter');
+
+    if (hospitalFilter) {
+      const textElement = hospitalFilter.parentElement.querySelector('.filter-text');
+      if (textElement) {
+        textElement.textContent = `${t('hospitals')} (${hospitalCount})`;
+      }
+    }
+
+    if (associationFilter) {
+      const textElement = associationFilter.parentElement.querySelector('.filter-text');
+      if (textElement) {
+        textElement.textContent = `${t('associations')} (${associationCount})`;
+      }
+    }
+  }, [organizations, t]);
+
+  // Clear existing markers
+  const clearMarkers = useCallback(() => {
+    if (!mapInstanceRef.current) return
+    markersRef.current.forEach(marker => {
+      mapInstanceRef.current.removeLayer(marker)
+    })
+    markersRef.current = []
+  }, [])
+
+  // Update markers on the map
+  const updateMarkers = useCallback(() => {
+    if (!mapInstanceRef.current) return
+
+    // Clear existing markers
+    clearMarkers()
+
+    const isMobile = window.innerWidth <= 768
+    const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon
+    const associationIconToUse = isMobile ? associationIconMobile : associationIcon
+
+    // Add markers for filtered organizations
+    filteredOrganizations.forEach(org => {
+      if (!org.coordinates || org.coordinates.length !== 2) {
+        console.warn('Invalid coordinates for org:', org)
+        return
+      }
+
+      const icon = org.type === 'hospital' ? hospitalIconToUse : associationIconToUse
+      const typeColor = org.type === 'hospital' ? '#dc3545' : '#007bff'
+      const typeLabel = org.type === 'hospital' ? t('hospital') : t('association')
+
+      const popupContent = `
+        <div class="organization-popup">
+          <h3 style="margin: 0 0 10px 0; color: ${typeColor}">
+            ${org.name}
+          </h3>
+          <p style="margin: 5px 0; font-size: 12px; color: #666;">
+            <strong>${t('type')}:</strong> ${org.type === 'hospital' ? '🏥' : '👥'} ${typeLabel}
+          </p>
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>📍 ${t('address')}:</strong><br>
+            <a href="#" class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
+               style="color: #007bff; text-decoration: none; cursor: pointer;">
+              ${org.address}
+            </a>
+          </p>
+          ${org.phone ? `
+            <p style="margin: 5px 0; font-size: 12px;">
+              <strong>📞 ${t('phone')}:</strong> ${org.phone}
+            </p>
+          ` : ''}
+          ${org.website ? `
+            <p style="margin: 5px 0; font-size: 12px;">
+              <strong>🌐 ${t('website')}:</strong> 
+              <a href="${org.website}" target="_blank" rel="noopener noreferrer">${org.website}</a>
+            </p>
+          ` : ''}
+          ${org.email ? `
+            <p style="margin: 5px 0; font-size: 12px;">
+              <strong>✉️ ${t('email')}:</strong> ${org.email}
+            </p>
+          ` : ''}
+          ${org.specialty ? `
+            <p style="margin: 5px 0; font-size: 12px;">
+              <strong>🏷️ ${t('specialty')}:</strong> ${org.specialty}
+            </p>
+          ` : ''}
+        </div>
+      `
+
+      const marker = L.marker(org.coordinates, { icon })
+        .addTo(mapInstanceRef.current)
+        .bindPopup(popupContent, { maxWidth: 300 })
+
+      markersRef.current.push(marker)
+    })
+  }, [filteredOrganizations, t, clearMarkers])
 
   // Update markers when filtered organizations change
   useEffect(() => {
-    updateMarkers();
-    updateFilterUI();
-  }, [filteredOrganizations, updateMarkers, updateFilterUI]);
+    updateMarkers()
+  }, [updateMarkers])
 
-  // Initialize organizations from props (no normalization needed - data is already processed)
+  // Handle map clicks when in location selection mode
   useEffect(() => {
-    console.log("Organizations received from props:", propOrganizations); // Debug log
+    if (!map || !isSelectingLocation) return
 
-    if (propOrganizations && propOrganizations.length > 0) {
-      setOrganizations(propOrganizations);
-      setFilteredOrganizations(propOrganizations);
-    } else {
-      setOrganizations([]);
-      setFilteredOrganizations([]);
+    const handleMapClick = (e) => {
+      if (isSelectingLocation && locationSelectionCallback) {
+        const { lat, lng } = e.latlng
+
+        // Add a marker at the clicked location for visual feedback
+        if (markerRef.current) {
+          map.removeLayer(markerRef.current)
+        }
+
+        markerRef.current = L.marker([lat, lng], {
+          icon: L.divIcon({
+            html: `<div style="background:#e74c3c;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);">📍</div>`,
+            className: 'location-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          })
+        }).addTo(map)
+
+        // Show coordinates in a popup
+        const popup = markerRef.current.bindPopup(`
+          <div style="text-align:center;padding:10px;">
+            <strong>✅ ${t('locationSelected')}</strong><br>
+            Lat: ${lat.toFixed(6)}<br>
+            Lng: ${lng.toFixed(6)}
+          </div>
+        `).openPopup()
+
+        // Auto-close the popup after 1.5 seconds and send coordinates
+        setTimeout(() => {
+          if (popup && popup.closePopup) {
+            popup.closePopup()
+          }
+          locationSelectionCallback([lat, lng])
+          setIsSelectingLocation(false)
+          setLocationSelectionCallback(null)
+          setIsFormOpen(true)
+        }, 1500)
+      }
     }
-  }, [propOrganizations]);
+
+    map.on('click', handleMapClick)
+
+    return () => {
+      map.off('click', handleMapClick)
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current)
+      }
+    }
+  }, [map, isSelectingLocation, locationSelectionCallback, t])
 
   // Handle location selection
-  const handleLocationSelection = (callback) => {
+  const handleLocationSelection = useCallback((callback) => {
     if (callback === null) {
-      setIsSelectingLocation(false);
-      setLocationSelectionCallback(null);
-      setSelectedCoordinates(null);
+      setIsSelectingLocation(false)
+      setLocationSelectionCallback(null)
+      if (markerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(markerRef.current)
+      }
     } else {
-      setIsSelectingLocation(true);
-      setLocationSelectionCallback(() => callback);
-      setIsFormOpen(false);
+      setIsFormOpen(false)
+      setIsSelectingLocation(true)
+      setLocationSelectionCallback(() => callback)
     }
-  };
+  }, [])
 
   // Handle adding a new organization
   const handleAddOrganization = (newOrg) => {
     if (onAddOrganization) {
-      onAddOrganization(newOrg);
+      onAddOrganization(newOrg)
     } else {
-      setOrganizations(prev => [...prev, newOrg]);
-      setFilteredOrganizations(prev => [...prev, newOrg]);
+      setOrganizations(prev => [...prev, newOrg])
+      setFilteredOrganizations(prev => [...prev, newOrg])
     }
+  }
 
-    if (map) {
-      const isMobile = window.innerWidth <= 768;
-      const icon = newOrg.type === 'hospital' ?
-        (isMobile ? hospitalIconMobile : hospitalIcon) :
-        (isMobile ? associationIconMobile : associationIcon);
+  // Handle search organization selection
+  const handleSelectOrganization = useCallback((organization) => {
+    if (mapInstanceRef.current && organization.coordinates) {
+      // Zoom to the selected organization
+      mapInstanceRef.current.setView(organization.coordinates, 15)
 
-      const popupContent = `
-        <div class="organization-popup">
-          <h3 style="margin: 0 0 10px 0; color: ${newOrg.type === 'hospital' ? '#dc3545' : '#007bff'}">
-            ${newOrg.name}
-          </h3>
-          <p style="margin: 5px 0; font-size: 12px; color: #666;">
-            <strong>Tipo:</strong> ${newOrg.type === 'hospital' ? '🏥 Hospital' : '👥 Asociación de Pacientes'}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>📍 Dirección:</strong><br>
-            <a href="#" class="address-link" data-lat="${newOrg.coordinates[0]}" data-lng="${newOrg.coordinates[1]}" style="color: #007bff; text-decoration: none; cursor: pointer;">
-              ${newOrg.address}
-            </a>
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>📞 Teléfono:</strong> ${newOrg.phone || 'No disponible'}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>🌐 Web:</strong> ${newOrg.website ? `<a href="${newOrg.website}" target="_blank">${newOrg.website}</a>` : 'No disponible'}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>✉️ Email:</strong> ${newOrg.email || 'No disponible'}
-          </p>
-        </div>
-      `;
-      L.marker(newOrg.coordinates, { icon })
-        .addTo(map)
-        .bindPopup(popupContent, { maxWidth: 300 });
+      // Find and open the popup for this organization
+      markersRef.current.forEach(marker => {
+        const markerLatLng = marker.getLatLng()
+        if (markerLatLng.lat === organization.coordinates[0] &&
+          markerLatLng.lng === organization.coordinates[1]) {
+          marker.openPopup()
+        }
+      })
     }
-  };
+  }, [])
 
   // Initialize map
   useEffect(() => {
     if (mapRef.current && !mapInstanceRef.current) {
-      const mapInstance = L.map(mapRef.current, { zoomControl: false }).setView([50.8503, 4.3517], 5);
+      const mapInstance = L.map(mapRef.current, { zoomControl: false })
+        .setView([50.8503, 4.3517], 5)
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(mapInstance);
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(mapInstance)
 
-      mapInstanceRef.current = mapInstance;
-      setMap(mapInstance);
+      // Add custom controls
+      addFilterControl(mapInstance)
+      addAddControl(mapInstance)
+      addGeolocationControl(mapInstance)
 
-      // Add filter control
-      const filterControl = L.Control.extend({
-        options: {
-          position: 'topleft'
-        },
-        onAdd: function (map) {
-          const container = L.DomUtil.create('div', 'filter-control');
-
-          const hospitalCount = organizations.filter(org => org.type === 'hospital').length;
-          const associationCount = organizations.filter(org => org.type === 'association').length;
-
-          container.innerHTML = `
-            <div class="filter-panel" id="filter-panel">
-              <button class="filter-toggle" id="filter-toggle" style="display: none;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
-                  <path d="M19 15L19.74 12.74L22 12L19.74 11.26L19 9L18.26 11.26L16 12L18.26 12.74L19 15Z" fill="currentColor"/>
-                  <path d="M5 6L5.74 3.74L8 3L5.74 2.26L5 0L4.26 2.26L2 3L4.26 3.74L5 6Z" fill="currentColor"/>
-                </svg>
-              </button>
-              <div class="filter-item">
-                <label class="filter-checkbox">
-                  <input type="checkbox" id="hospital-filter" ${showHospitals ? 'checked' : ''}>
-                  <span class="filter-icon" style="color: #dc3545;">⚕</span>
-                  <span class="filter-text">Hospitales (${showHospitals ? hospitalCount : 0}/${hospitalCount})</span>
-                </label>
-              </div>
-              <div class="filter-item">
-                <label class="filter-checkbox">
-                  <input type="checkbox" id="association-filter" ${showAssociations ? 'checked' : ''}>
-                  <span class="filter-icon" style="color: #007bff;">👥</span>
-                  <span class="filter-text">Asociaciones (${showAssociations ? associationCount : 0}/${associationCount})</span>
-                </label>
-              </div>
-            </div>
-          `;
-
-          const hospitalFilter = container.querySelector('#hospital-filter');
-          const associationFilter = container.querySelector('#association-filter');
-          const filterPanel = container.querySelector('#filter-panel');
-          const filterToggle = container.querySelector('#filter-toggle');
-
-          if (window.innerWidth <= 768) {
-            filterPanel.classList.add('collapsed');
-            filterToggle.style.display = 'block';
-          }
-
-          filterToggle.addEventListener('click', () => {
-            filterPanel.classList.toggle('collapsed');
-          });
-
-          hospitalFilter.addEventListener('change', (e) => {
-            setShowHospitals(e.target.checked);
-          });
-
-          associationFilter.addEventListener('change', (e) => {
-            setShowAssociations(e.target.checked);
-          });
-
-          return container;
-        }
-      });
-      // Add organization control
-      const addControl = L.Control.extend({
-        options: {
-          position: 'bottomright'
-        },
-        onAdd: function (map) {
-          const container = L.DomUtil.create('div', 'add-control');
-
-          container.innerHTML = `
-      <button class="add-btn round-btn" title="Add Organization">
-        <span class="add-icon">+</span>
-      </button>
-    `;
-
-          const addButton = container.querySelector('.add-btn');
-          addButton.addEventListener('click', () => {
-            setIsFormOpen(true);
-          });
-
-          return container;
-        }
-      });
-
-      mapInstance.addControl(new addControl());
-      mapInstance.addControl(new filterControl());
-
-      // Add other controls (address search, add organization, geolocation) here...
-      // ... [keep your existing control code]
-
-      setMap(mapInstance);
+      mapInstanceRef.current = mapInstance
+      setMap(mapInstance)
     }
 
     return () => {
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
       }
-    };
-  }, [organizations, showHospitals, showAssociations]);
+    }
+  }, [])
+
+  // Filter control
+  const addFilterControl = (mapInstance) => {
+    const FilterControl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'filter-control')
+
+        // Calculate initial counts
+        const hospitalCount = organizations.filter(org => org.type === 'hospital').length
+        const associationCount = organizations.filter(org => org.type === 'association').length
+
+        container.innerHTML = `
+          <div class="filter-panel" id="filter-panel">
+            <button class="filter-toggle" id="filter-toggle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 14.414V19a1 1 0 01-.553.894l-2 1A1 1 0 019 20v-5.586L1.293 6.707A1 1 0 011 6V4z" fill="currentColor"/>
+              </svg>
+            </button>
+            <div class="filter-item">
+              <label class="filter-checkbox">
+                <input type="checkbox" id="hospital-filter" ${showHospitals ? 'checked' : ''}>
+                <span class="filter-icon" style="color: #dc3545;">⚕</span>
+                <span class="filter-text">${t('hospitals')} (${hospitalCount})</span>
+              </label>
+            </div>
+            <div class="filter-item">
+              <label class="filter-checkbox">
+                <input type="checkbox" id="association-filter" ${showAssociations ? 'checked' : ''}>
+                <span class="filter-icon" style="color: #007bff;">👥</span>
+                <span class="filter-text">${t('associations')} (${associationCount})</span>
+              </label>
+            </div>
+          </div>
+        `
+
+        const hospitalFilter = container.querySelector('#hospital-filter')
+        const associationFilter = container.querySelector('#association-filter')
+        const filterPanel = container.querySelector('#filter-panel')
+        const filterToggle = container.querySelector('#filter-toggle')
+
+        // Handle mobile toggle
+        filterToggle.addEventListener('click', () => {
+          if (filterPanel.classList.contains('expanded')) {
+            filterPanel.classList.remove('expanded');
+          } else {
+            filterPanel.classList.add('expanded');
+          }
+        });
+
+        hospitalFilter.addEventListener('change', (e) => {
+          setShowHospitals(e.target.checked)
+        })
+
+        associationFilter.addEventListener('change', (e) => {
+          setShowAssociations(e.target.checked)
+        })
+
+        filterControlRef.current = container;
+        return container
+      }
+    })
+
+    mapInstance.addControl(new FilterControl())
+  }
+
+  // Add control
+  const addAddControl = (mapInstance) => {
+    const AddControl = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'add-control')
+
+        container.innerHTML = `
+          <button class="add-btn" title="${t('addOrganization')}">
+            <span class="add-icon">+</span>
+          </button>
+        `
+
+        const addButton = container.querySelector('.add-btn')
+        addButton.addEventListener('click', () => {
+          setIsFormOpen(true)
+        })
+
+        return container
+      }
+    })
+
+    mapInstance.addControl(new AddControl())
+  }
+
+  // Geolocation control
+  const addGeolocationControl = (mapInstance) => {
+    const GeolocationControl = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'geolocation-control')
+
+        container.innerHTML = `
+          <button class="geolocation-btn" title="${t('findMyLocation')}">
+            <span class="geolocation-icon">📍</span>
+          </button>
+        `
+
+        const geoButton = container.querySelector('.geolocation-btn')
+        geoButton.addEventListener('click', () => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords
+                mapInstance.setView([latitude, longitude], 13)
+              },
+              (error) => {
+                console.error('Geolocation error:', error)
+                alert(t('geolocationError'))
+              }
+            )
+          } else {
+            alert(t('geolocationNotSupported'))
+          }
+        })
+
+        return container
+      }
+    })
+
+    mapInstance.addControl(new GeolocationControl())
+  }
 
   return (
     <div className="map-container">
       <div
         ref={mapRef}
         className={`map-viewport ${isSelectingLocation ? 'location-selection-mode' : ''}`}
-      ></div>
+      />
 
+      {/* Search Control */}
+      <SearchControl
+        organizations={organizations}
+        onSelectOrganization={handleSelectOrganization}
+      />
+
+      {/* Location Selection Overlay */}
       {isSelectingLocation && (
         <div className="location-selection-overlay">
           <div className="location-selection-banner">
             <div className="location-instructions">
-              <p>🗺️ <strong>{t('locationSelectionMode')}</strong></p>
+              <p><strong>{t('locationSelectionMode')}</strong></p>
               <p>{t('locationSelectionDescription')}</p>
+              <p><small>{t('clickMapToSelect')}</small></p>
             </div>
             <button
               type="button"
-              className="btn-secondary location-cancel-btn"
+              className="location-cancel-btn"
               onClick={() => handleLocationSelection(null)}
             >
               ← {t('cancel')} {t('selectLocation')}
@@ -359,6 +452,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         </div>
       )}
 
+      {/* Add Organization Form */}
       <AddOrganizationForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
@@ -369,7 +463,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         isLocationSelectionMode={isSelectingLocation}
       />
     </div>
-  );
-};
+  )
+}
 
-export default MapComponent;
+export default MapComponent
