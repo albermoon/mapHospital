@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './MapSelector.css'
+import { useTranslation } from '../utils/i18n'
 
 const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.8503, 4.3517] }) => {
+  const { t } = useTranslation()
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markerRef = useRef(null)
@@ -21,7 +23,7 @@ const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.85
       const initMap = () => {
         if (mapRef.current && !mapInstanceRef.current) {
           console.log('Initializing map selector...')
-          
+
           // Initialize the map
           const map = L.map(mapRef.current).setView(initialCenter, 5)
 
@@ -34,12 +36,12 @@ const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.85
           map.on('click', (e) => {
             console.log('Map clicked:', e.latlng)
             const { lat, lng } = e.latlng
-            
+
             // Remove existing marker
             if (markerRef.current) {
               map.removeLayer(markerRef.current)
             }
-            
+
             // Add new marker
             markerRef.current = L.marker([lat, lng], {
               icon: L.divIcon({
@@ -70,7 +72,7 @@ const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.85
             // Show coordinates popup briefly
             markerRef.current.bindPopup(`
               <div style="text-align: center; padding: 10px;">
-                <strong>✅ Ubicación seleccionada</strong><br>
+                <strong>✅ ${t('locationSelected')}</strong><br>
                 Lat: ${lat.toFixed(6)}<br>
                 Lng: ${lng.toFixed(6)}
               </div>
@@ -84,7 +86,7 @@ const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.85
           })
 
           mapInstanceRef.current = map
-          
+
           // Force map refresh after initialization
           setTimeout(() => {
             map.invalidateSize()
@@ -129,23 +131,23 @@ const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.85
     <div className="map-selector-overlay" onClick={onClose}>
       <div className="map-selector-container" onClick={(e) => e.stopPropagation()}>
         <div className="map-selector-header">
-          <h3>📍 Seleccionar Localización</h3>
+          <h3>📍 {t('selectLocation')}</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
-        
+
         <div className="map-selector-instructions">
-          <p>Haga clic en el mapa para seleccionar la ubicación</p>
-          <p className="instruction-subtitle">La ubicación se guardará automáticamente</p>
+          <p>{t('selectLocationInstructions')}</p>
+          <p className="instruction-subtitle">{t('locationAutoSave')}</p>
         </div>
-        
+
         <div ref={mapRef} className="map-selector-viewport"></div>
-        
+
         <div className="map-selector-actions">
           <button className="btn-secondary" onClick={onClose}>
-            Cancelar
+            {t('cancel')}
           </button>
           <div className="auto-save-info">
-            <span>📍 La ubicación se guardará automáticamente al hacer clic</span>
+            <span>📍 {t('locationAutoSave')}</span>
           </div>
         </div>
       </div>
