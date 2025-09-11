@@ -7,7 +7,7 @@ import { useTranslation } from './utils/i18n'
 import './App.css'
 
 function App() {
-  const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALS)
+  const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALES)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const { t } = useTranslation()
 

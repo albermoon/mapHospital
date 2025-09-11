@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 
-// Sheet names as they exist in your Google Sheets
 export const SHEET_NAMES = {
-  ORGANIZACIONES: 'Organizaciones', // headers only
+  ORGANIZACIONES: 'Organizaciones',
   HOSPITALES: 'Hospitales',
   ASOCIACIONES: 'Asociaciones'
 }
@@ -28,7 +27,6 @@ export function useGoogleSheets() {
         `/api/google-sheets?sheet=${sheetName}`,
         { method: 'GET' }
       )
-
       if (!res.ok) {
         throw new Error(`HTTP error ${res.status}`)
       }
