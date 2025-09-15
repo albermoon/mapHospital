@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Vitest config (added)
+// Using ESM export with test section for Vitest
+
 function arbLoader() {
   return {
     name: 'arb-loader',
@@ -17,4 +20,10 @@ function arbLoader() {
 
 export default defineConfig({
   plugins: [react(), arbLoader()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./vitest.setup.js'],
+    css: true,
+  }
 })

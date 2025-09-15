@@ -50,6 +50,24 @@ npm run build
 npm run preview
 ```
 
+## Testing
+
+```bash
+npm run test
+npm run test:watch
+```
+
+### Test mode
+
+Create a `.env.test` or set these in `.env.local` to enable test mode:
+
+```
+VITE_TEST_MODE=true
+VITE_GOOGLE_SHEETS_ENABLED=false
+```
+
+When `VITE_TEST_MODE=true`, code may short-circuit network calls by checking `ENV_CONFIG.isTest`.
+
 ## Project Structure
 
 ```

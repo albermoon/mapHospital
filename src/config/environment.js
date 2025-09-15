@@ -3,10 +3,11 @@ export const ENV_CONFIG = {
   // Verificar si estamos en desarrollo o producción
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,
+  isTest: Boolean(import.meta.env.VITE_TEST_MODE) || false,
   
   // Configuración de Google Sheets
   googleSheets: {
-    enabled: true, // Puedes deshabilitar Google Sheets aquí si es necesario
+    enabled: import.meta.env.VITE_GOOGLE_SHEETS_ENABLED !== 'false',
     debugMode: import.meta.env.DEV, // Modo debug en desarrollo
   },
   

@@ -3,6 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
+import { filterOrganizationsByType } from '../utils/filter'
 import SearchControl from './SearchControl'
 import { useTranslation } from '../utils/i18n'
 
@@ -46,11 +47,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
   // Filter organizations based on toggle states
   useEffect(() => {
-    const filtered = organizations.filter(org => {
-      if (org.type === 'hospital' && !showHospitals) return false
-      if (org.type === 'association' && !showAssociations) return false
-      return true
-    })
+    const filtered = filterOrganizationsByType(organizations, showHospitals, showAssociations)
     setFilteredOrganizations(filtered)
   }, [organizations, showHospitals, showAssociations])
 
