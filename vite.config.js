@@ -1,7 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
-// Vitest config (added)
 // Using ESM export with test section for Vitest
 
 function arbLoader() {
@@ -25,5 +23,9 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.js'],
     css: true,
+    reporters: [
+      'default',
+      ['./vitest.checklist-reporter.js', {}]
+    ]
   }
 })
