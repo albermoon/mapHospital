@@ -7,3 +7,13 @@ export function filterOrganizationsByType(organizations, showHospitals, showAsso
   })
 }
 
+export function computeVisibleCounts(organizations) {
+  const result = { hospitals: 0, associations: 0 }
+  if (!Array.isArray(organizations)) return result
+  for (const org of organizations) {
+    if (org.type === 'hospital') result.hospitals += 1
+    else if (org.type === 'association') result.associations += 1
+  }
+  return result
+}
+

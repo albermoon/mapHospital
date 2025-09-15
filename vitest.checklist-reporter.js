@@ -3,7 +3,8 @@ export default function ChecklistReporter() {
     onFinished(files /*: any[] */) {
       const checklist = {
         Search: 'KO',
-        Widget: 'KO',
+        'Widget Filter': 'KO',
+        'Widget Counts': 'KO',
         POST: 'KO',
         GET: 'KO',
       }
@@ -29,7 +30,10 @@ export default function ChecklistReporter() {
             checklist.Search = 'OK'
           }
           if (filePath.includes('filter.test') || /filterOrganizationsByType|widget/i.test(name)) {
-            checklist.Widget = 'OK'
+            checklist['Widget Filter'] = 'OK'
+          }
+          if (/computeVisibleCounts|visible counts/i.test(name)) {
+            checklist['Widget Counts'] = 'OK'
           }
           if (/saveData|POST/i.test(name)) {
             checklist.POST = 'OK'
@@ -52,10 +56,11 @@ export default function ChecklistReporter() {
       //
       const lines = [
         'Summary Checklist',
-        `Search     ${checklist.Search}`,
-        `Widget     ${checklist.Widget}`,
-        `POST       ${checklist.POST}`,
-        `GET        ${checklist.GET}`,
+        `Search         ${checklist.Search}`,
+        `Widget-Filter  ${checklist['Widget Filter']}`,
+        `Widget-Counts  ${checklist['Widget Counts']}`,
+        `POST           ${checklist.POST}`,
+        `GET            ${checklist.GET}`,
         ''
       ]
       // eslint-disable-next-line no-console
