@@ -2,29 +2,29 @@ import React from 'react'
 import './GoogleSheetsStatus.css'
 import { getEnvironmentInfo } from '../config/environment'
 
-const GoogleSheetsStatus = ({ 
-  loading, 
-  error, 
-  onSyncWithLocal, 
-  localOrganizations 
+const GoogleSheetsStatus = ({
+  loading,
+  error,
+  onSyncWithLocal,
+  localOrganizations
 }) => {
   const envInfo = getEnvironmentInfo()
 
   return (
     <div className="google-sheets-status">
       <div className="status-header">
-        <h3>🔗 Estado de Google Sheets</h3>
+        <h3>🔗 Google Sheets Status</h3>
       </div>
 
       {/* Información del entorno */}
       <div className="environment-info">
-        <h4>🌍 Información del Entorno</h4>
+        <h4>🌍 Environment Information</h4>
         <div className="env-details">
-          <p><strong>Modo:</strong> {envInfo.isDevelopment ? 'Desarrollo' : 'Producción'}</p>
-          <p><strong>Google Sheets:</strong> Habilitado</p>
-          <p><strong>Navegador:</strong> {envInfo.userAgent.split(' ')[0]}</p>
-          <p><strong>Plataforma:</strong> {envInfo.platform}</p>
-          <p><strong>En línea:</strong> {envInfo.onLine ? '✅ Sí' : '❌ No'}</p>
+          <p><strong>Mode:</strong> {envInfo.isDevelopment ? 'Development' : 'Production'}</p>
+          <p><strong>Google Sheets:</strong> Enabled</p>
+          <p><strong>Browser:</strong> {envInfo.userAgent.split(' ')[0]}</p>
+          <p><strong>Platform:</strong> {envInfo.platform}</p>
+          <p><strong>Online:</strong> {envInfo.onLine ? '✅ Yes' : '❌ No'}</p>
         </div>
       </div>
 
@@ -36,12 +36,12 @@ const GoogleSheetsStatus = ({
 
       <div className="status-actions">
         {localOrganizations && localOrganizations.length > 0 && (
-          <button 
+          <button
             className="btn-sync"
             onClick={() => onSyncWithLocal(localOrganizations)}
             disabled={loading}
           >
-            {loading ? '🔄 Sincronizando...' : '📊 Sincronizar con Datos Locales'}
+            {loading ? '🔄 Syncing...' : '📊 Sync with Local Data'}
           </button>
         )}
       </div>
@@ -49,9 +49,9 @@ const GoogleSheetsStatus = ({
       {/* Información de debug en desarrollo */}
       {envInfo.isDevelopment && (
         <div className="debug-info">
-          <h4>🐛 Información de Debug (Solo Desarrollo)</h4>
+          <h4>🐛 Debug Information (Development Only)</h4>
           <details>
-            <summary>Ver detalles del entorno</summary>
+            <summary>View environment details</summary>
             <pre>{JSON.stringify(envInfo, null, 2)}</pre>
           </details>
         </div>
@@ -61,4 +61,3 @@ const GoogleSheetsStatus = ({
 }
 
 export default GoogleSheetsStatus
-

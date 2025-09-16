@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import MapComponent from './components/MapComponent'
-import GoogleScriptTester from './test/GoogleScriptTester'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
 import LanguageSelector from './components/LanguageSelector'
 import GoogleSheetsStatus from './components/GoogleSheetsStatus'
 import { useTranslation } from './utils/i18n'
 import './App.css'
 
-const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
-
 function App() {
-  const [showTester, setShowTester] = useState(false)
-  const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALS)
+  const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALES)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const { t } = useTranslation()
 
   // Hook to handle Google Sheets
-  const { data, loading, error, connected, fetchData, saveData } = useGoogleSheets(IS_TEST_MODE)
+  const { data, loading, error, connected, fetchData, saveData } = useGoogleSheets()
 
   // State for organizations
   const [organizations, setOrganizations] = useState([])
@@ -147,9 +143,9 @@ function App() {
           flexDirection: 'column'
         }}>
           <div>Loading organizations...</div>
-          {IS_TEST_MODE && <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-            Test Mode: {connected ? 'Connected' : 'Using sample data'}
-          </div>}
+          <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+            Status: {connected ? 'Connected' : 'Connecting...'}
+          </div>
         </div>
       </div>
     )
@@ -187,72 +183,20 @@ function App() {
         <LanguageSelector />
       </header>
 
-      {IS_TEST_MODE && (
-        <>
-          <button
-            onClick={() => setShowTester(!showTester)}
-            style={{
-              position: 'fixed',
-              bottom: '10px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 1000,
-              padding: '10px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            {showTester ? 'Hide Tester' : 'Show Script Tester'}
-          </button>
-
-          {/* Sheet selector for test mode */}
-          <div style={{
-            position: 'fixed',
-            top: '10px',
-            right: '400px',
-            zIndex: 1000,
-            backgroundColor: 'white',
-            padding: '10px',
-            borderRadius: '5px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <label>Sheet: </label>
-            <select
-              value={currentSheet}
-              onChange={(e) => handleSheetChange(e.target.value)}
-              style={{ marginLeft: '5px' }}
-            >
-              <option value={SHEET_NAMES.HOSPITALS}>Hospitals</option>
-              <option value={SHEET_NAMES.ASSOCIATIONS}>Associations</option>
-            </select>
-            <div style={{ fontSize: '12px', marginTop: '5px', color: '#666' }}>
-              {connected ? '🟢 Connected' : '🔴 Test Mode'} | {organizations.length} items
-            </div>
-          </div>
-        </>
-      )}
-
-      {IS_TEST_MODE && showTester ? (
-        <GoogleScriptTester />
-      ) : (
-        <main>
-          <GoogleSheetsStatus
-            loading={loading}
-            error={error}
-            onSyncWithLocal={handleSyncWithLocal}
-            localOrganizations={localOrganizations}
-          />
-          <MapComponent
-            organizations={organizations}
-            onAddOrganization={handleAddOrganization}
-            loading={loading && organizations.length === 0}
-            error={error}
-          />
-        </main>
-      )}
+      <main>
+        <GoogleSheetsStatus
+          loading={loading}
+          error={error}
+          onSyncWithLocal={handleSyncWithLocal}
+          localOrganizations={localOrganizations}
+        />
+        <MapComponent
+          organizations={organizations}
+          onAddOrganization={handleAddOrganization}
+          loading={loading && organizations.length === 0}
+          error={error}
+        />
+      </main>
     </div>
   )
 }

@@ -1,20 +1,19 @@
 import { useState, useCallback } from 'react'
 
-// Sheet names as they exist in your Google Sheets
 export const SHEET_NAMES = {
-  ORGANIZACIONES: 'Organizaciones', // headers only
+  ORGANIZACIONES: 'Organizaciones',
   HOSPITALES: 'Hospitales',
   ASOCIACIONES: 'Asociaciones'
 }
 
-export function useGoogleSheets(isTestMode = false) {
+export function useGoogleSheets() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [connected, setConnected] = useState(false)
 
   /**
-   * Fetch data from Google Apps Script (or sample data in test mode).
+   * Fetch data from Google Apps Script.
    * Always returns the full dataset from the selected sheet.
    */
   const fetchData = useCallback(async (sheetName) => {
@@ -24,28 +23,22 @@ export function useGoogleSheets(isTestMode = false) {
     try {
       let responseData
 
-      if (isTestMode) {
-        console.log(`📄 [TEST MODE] Loading sample data for sheet: ${sheetName}`)
-        responseData = sampleData[sheetName] || []
+      const res = await fetch(
+        `/api/google-sheets?sheet=${sheetName}`,
+        { method: 'GET' }
+      )
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`)
+      }
+
+      const json = await res.json()
+      console.log("API Response:", json)
+
+      if (json.status === 'success') {
+        responseData = json.data || []
+        setConnected(true)
       } else {
-        const res = await fetch(
-          `${import.meta.env.VITE_GOOGLE_SCRIPT_URL}?sheet=${sheetName}`,
-          { method: 'GET' }
-        )
-
-        if (!res.ok) {
-          throw new Error(`HTTP error ${res.status}`)
-        }
-
-        const json = await res.json()
-        console.log("API Response:", json)
-
-        if (json.status === 'success') {
-          responseData = json.data || []
-          setConnected(true)
-        } else {
-          throw new Error(json.message || 'Unknown error from API')
-        }
+        throw new Error(json.message || 'Unknown error from API')
       }
 
       setData(responseData)
@@ -56,14 +49,14 @@ export function useGoogleSheets(isTestMode = false) {
     } finally {
       setLoading(false)
     }
-  }, [isTestMode])
+  }, [])
 
   /**
    * Save data back to Google Apps Script.
    */
   const saveData = useCallback(async (organization) => {
     try {
-      const res = await fetch(import.meta.env.VITE_GOOGLE_SCRIPT_URL, {
+      const res = await fetch('/api/google-sheets', {
         method: 'POST',
         body: JSON.stringify(organization),
         headers: { 'Content-Type': 'application/json' }
