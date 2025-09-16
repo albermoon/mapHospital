@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+// Using ESM export with test section for Vitest
 
 function arbLoader() {
   return {
@@ -17,4 +18,14 @@ function arbLoader() {
 
 export default defineConfig({
   plugins: [react(), arbLoader()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./vitest.setup.js'],
+    css: true,
+    reporters: [
+      'default',
+      ['./vitest.checklist-reporter.js', {}]
+    ]
+  }
 })

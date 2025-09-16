@@ -3,6 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
+import { filterOrganizationsByType } from '../utils/filter'
 import SearchControl from './SearchControl'
 import { useTranslation } from '../utils/i18n'
 
@@ -46,25 +47,22 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
   // Filter organizations based on toggle states
   useEffect(() => {
-    const filtered = organizations.filter(org => {
-      if (org.type === 'hospital' && !showHospitals) return false
-      if (org.type === 'association' && !showAssociations) return false
-      return true
-    })
+    const filtered = filterOrganizationsByType(organizations, showHospitals, showAssociations)
     setFilteredOrganizations(filtered)
   }, [organizations, showHospitals, showAssociations])
 
-  // Update filter counts when organizations change
+  // Update filter counts when data or visibility changes
   useEffect(() => {
     if (filterControlRef.current) {
       updateFilterCounts();
     }
-  }, [organizations]);
+  }, [organizations, filteredOrganizations, t]);
 
   // Function to update filter counts
   const updateFilterCounts = useCallback(() => {
-    const hospitalCount = organizations.filter(org => org.type === 'hospital').length;
-    const associationCount = organizations.filter(org => org.type === 'association').length;
+    // Reflect counts for currently visible items
+    const hospitalCount = filteredOrganizations.filter(org => org.type === 'hospital').length;
+    const associationCount = filteredOrganizations.filter(org => org.type === 'association').length;
 
     // Update the DOM elements directly
     const hospitalFilter = document.getElementById('hospital-filter');
@@ -83,7 +81,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         textElement.textContent = `${t('associations')} (${associationCount})`;
       }
     }
-  }, [organizations, t]);
+  }, [filteredOrganizations, t]);
 
   // Clear existing markers
   const clearMarkers = useCallback(() => {
