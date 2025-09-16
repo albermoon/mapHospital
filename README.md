@@ -1,6 +1,6 @@
 # Hospital Map Application
 
-A React application built with Vite that displays an interactive map using Leaflet and OpenStreetMap, it recuperates hospitals and associations from a Google Data Sheet.
+A React application built with Vite that displays an interactive map using Leaflet and OpenStreetMap, it retrieves hospitals and associations from a Google Data Sheet.
 
 ## Features
 
