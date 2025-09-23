@@ -2,7 +2,24 @@
 
 A React application built with Vite that displays an interactive map using Leaflet and OpenStreetMap, it retrieves hospitals and associations from a Google Data Sheet.
 
-## Features
+## 📋 Table of Contents
+
+- [🚀 Features](#-features)
+- [🛠️ Technologies Used](#️-technologies-used)
+- [📦 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Environment Setup](#environment-setup)
+  - [IDE Setup](#ide-setup-recommended)
+  - [Building for Production](#building-for-production)
+- [🧪 Testing Strategy](#-testing-strategy)
+- [🔄 Development Workflow](#-development-workflow)
+- [🏗️ CI/CD and Environments](#️-cicd-and-environments)
+- [🏛️ App Architecture & Folder Structure](#️-app-architecture--folder-structure)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [🎨 Customization](#-customization)
+- [📄 License](#-license)
+
+## 🚀 Features
 
 - **Interactive Map**: Leaflet-based map with OpenStreetMap tiles
 - **Hospital & Association Markers**: Custom icons with popup information
@@ -14,7 +31,7 @@ A React application built with Vite that displays an interactive map using Leafl
 - **Real-time Status**: Connection status indicator for Google Sheets
 - **Location Selection**: Click-to-select location for new organizations
 
-## Technologies Used
+## 🛠️ Technologies Used
 
 ### Frontend
 - **React 18** - UI framework
@@ -37,7 +54,7 @@ A React application built with Vite that displays an interactive map using Leafl
 ### Deployment
 - **Vercel** - Hosting and deployment platform
 
-## Getting Started
+## 📦 Getting Started
 
 ### Prerequisites
 
@@ -189,7 +206,7 @@ npm run preview
 
 vercel
 
-## Testing Strategy
+## 🧪 Testing Strategy
 
 The project implements a comprehensive testing strategy using modern tools and best practices.
 
@@ -311,7 +328,7 @@ E2E testing can be added in the future if needed. Consider tools like Playwright
 6. **Maintain Test Data**: Keep test data realistic and up-to-date
 7. **Regular Review**: Review and update tests as the application evolves
 
-## Development Workflow
+## 🔄 Development Workflow
 
 ### Branch Strategy
 
@@ -378,7 +395,7 @@ chore: update dependencies
    - Delete feature branch after merge
    - Verify deployment on staging/preview environment
 
-## CI/CD and Environments
+## 🏗️ CI/CD and Environments
 
 - **Build**: `npm run build` via Vite. Configured for Vercel (`vercel.json`).
 - **Preview deploys**: Vercel creates preview URLs for PRs.
@@ -402,7 +419,7 @@ jobs:
       - run: npm run test
 ```
 
-## App Architecture & Folder Structure
+## 🏛️ App Architecture & Folder Structure
 
 The application follows a modular, component-based architecture with clear separation of concerns.
 
@@ -558,7 +575,7 @@ mapHospital/
 - **Separation of Concerns**: Clear boundaries between UI, logic, and data
 - **Error Boundaries**: Graceful error handling and user feedback
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues and Solutions
 
@@ -722,7 +739,7 @@ This will provide:
 - Check for proper file permissions
 - Ensure proper Node.js installation via package manager or nvm
 
-## Customization
+## 🎨 Customization
 
 ### Map Configuration
 
@@ -789,6 +806,6 @@ export const createCustomIcon = (type, color = 'blue') => {
 @media (min-width: 1440px) { /* Large Desktop */ }
 ```
 
-## License
+## 📄 License
 
 This project is licensed under the ISC License.
