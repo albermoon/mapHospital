@@ -20,6 +20,10 @@ export function useGoogleSheets() {
     setLoading(true)
     setError(null)
 
+    // Start timing the download process
+    const downloadStartTime = performance.now()
+    console.log(`🚀 Starting data download for sheet: ${sheetName}`)
+
     try {
       let responseData
 
@@ -40,6 +44,12 @@ export function useGoogleSheets() {
       } else {
         throw new Error(json.message || 'Unknown error from API')
       }
+
+      // End timing the download process
+      const downloadEndTime = performance.now()
+      const downloadDuration = downloadEndTime - downloadStartTime
+      console.log(`⏱️ Data download completed in ${downloadDuration.toFixed(2)}ms`)
+      console.log(`📊 Downloaded ${responseData.length} organizations`)
 
       setData(responseData)
     } catch (err) {

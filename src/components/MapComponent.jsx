@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
@@ -51,18 +51,24 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     setFilteredOrganizations(filtered)
   }, [organizations, showHospitals, showAssociations])
 
-  // Update filter counts when data or visibility changes
+  // Memoize filter counts to prevent unnecessary recalculations
+  const filterCounts = useMemo(() => {
+    const hospitalCount = organizations.filter(org => org.type === 'hospital').length;
+    const associationCount = organizations.filter(org => org.type === 'association').length;
+    return { hospitalCount, associationCount };
+  }, [organizations]);
+
+  // Update filter counts when data changes (removed infinite loop)
   useEffect(() => {
     if (filterControlRef.current) {
       updateFilterCounts();
     }
-  }, [organizations, filteredOrganizations, t]);
+  }, [filterCounts, t]); // Only depend on memoized counts, not filteredOrganizations
 
   // Function to update filter counts
   const updateFilterCounts = useCallback(() => {
-    // Reflect counts for currently visible items
-    const hospitalCount = filteredOrganizations.filter(org => org.type === 'hospital').length;
-    const associationCount = filteredOrganizations.filter(org => org.type === 'association').length;
+    // Use memoized counts instead of recalculating
+    const { hospitalCount, associationCount } = filterCounts;
 
     // Update the DOM elements directly
     const hospitalFilter = document.getElementById('hospital-filter');
@@ -81,7 +87,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         textElement.textContent = `${t('associations')} (${associationCount})`;
       }
     }
-  }, [filteredOrganizations, t]);
+  }, [filterCounts, t]);
 
   // Clear existing markers
   const clearMarkers = useCallback(() => {
@@ -92,78 +98,115 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     markersRef.current = []
   }, [])
 
-  // Update markers on the map
+  // Memoize popup content generation to avoid recreating on every render
+  const generatePopupContent = useCallback((org) => {
+    const typeColor = org.type === 'hospital' ? '#dc3545' : '#007bff'
+    const typeLabel = org.type === 'hospital' ? t('hospital') : t('association')
+
+    return `
+      <div class="organization-popup">
+        <h3 style="margin: 0 0 10px 0; color: ${typeColor}">
+          ${org.name}
+        </h3>
+        <p style="margin: 5px 0; font-size: 12px; color: #666;">
+          <strong>${t('type')}:</strong> ${org.type === 'hospital' ? '🏥' : '👥'} ${typeLabel}
+        </p>
+        <p style="margin: 5px 0; font-size: 12px;">
+          <strong>📍 ${t('address')}:</strong><br>
+          <a href="#" class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
+             style="color: #007bff; text-decoration: none; cursor: pointer;">
+            ${org.address}
+          </a>
+        </p>
+        ${org.phone ? `
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>📞 ${t('phone')}:</strong> ${org.phone}
+          </p>
+        ` : ''}
+        ${org.website ? `
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>🌐 ${t('website')}:</strong> 
+            <a href="${org.website}" target="_blank" rel="noopener noreferrer">${org.website}</a>
+          </p>
+        ` : ''}
+        ${org.email ? `
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>✉️ ${t('email')}:</strong> ${org.email}
+          </p>
+        ` : ''}
+        ${org.specialty ? `
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>🏷️ ${t('specialty')}:</strong> ${org.specialty}
+          </p>
+        ` : ''}
+      </div>
+    `
+  }, [t])
+
+  // Update markers on the map with performance optimizations
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return
 
+    // Start timing the marker rendering process
+    const renderStartTime = performance.now()
+    console.log(`🎨 Starting marker rendering for ${filteredOrganizations.length} organizations`)
+
     // Clear existing markers
     clearMarkers()
+
+    // Early return if no organizations
+    if (filteredOrganizations.length === 0) {
+      console.log(`⏱️ No markers to render`)
+      return
+    }
 
     const isMobile = window.innerWidth <= 768
     const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon
     const associationIconToUse = isMobile ? associationIconMobile : associationIcon
 
-    // Add markers for filtered organizations
-    filteredOrganizations.forEach(org => {
+    // Batch marker creation for better performance
+    const markersToAdd = []
+    
+    filteredOrganizations.forEach((org, index) => {
       if (!org.coordinates || org.coordinates.length !== 2) {
         console.warn('Invalid coordinates for org:', org)
         return
       }
 
       const icon = org.type === 'hospital' ? hospitalIconToUse : associationIconToUse
-      const typeColor = org.type === 'hospital' ? '#dc3545' : '#007bff'
-      const typeLabel = org.type === 'hospital' ? t('hospital') : t('association')
-
-      const popupContent = `
-        <div class="organization-popup">
-          <h3 style="margin: 0 0 10px 0; color: ${typeColor}">
-            ${org.name}
-          </h3>
-          <p style="margin: 5px 0; font-size: 12px; color: #666;">
-            <strong>${t('type')}:</strong> ${org.type === 'hospital' ? '🏥' : '👥'} ${typeLabel}
-          </p>
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>📍 ${t('address')}:</strong><br>
-            <a href="#" class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
-               style="color: #007bff; text-decoration: none; cursor: pointer;">
-              ${org.address}
-            </a>
-          </p>
-          ${org.phone ? `
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>📞 ${t('phone')}:</strong> ${org.phone}
-            </p>
-          ` : ''}
-          ${org.website ? `
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>🌐 ${t('website')}:</strong> 
-              <a href="${org.website}" target="_blank" rel="noopener noreferrer">${org.website}</a>
-            </p>
-          ` : ''}
-          ${org.email ? `
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>✉️ ${t('email')}:</strong> ${org.email}
-            </p>
-          ` : ''}
-          ${org.specialty ? `
-            <p style="margin: 5px 0; font-size: 12px;">
-              <strong>🏷️ ${t('specialty')}:</strong> ${org.specialty}
-            </p>
-          ` : ''}
-        </div>
-      `
+      const popupContent = generatePopupContent(org)
 
       const marker = L.marker(org.coordinates, { icon })
-        .addTo(mapInstanceRef.current)
         .bindPopup(popupContent, { maxWidth: 300 })
 
+      markersToAdd.push(marker)
+
+      // Log progress for large datasets
+      if (filteredOrganizations.length > 100 && index % 50 === 0) {
+        console.log(`🎨 Prepared ${index + 1}/${filteredOrganizations.length} markers`)
+      }
+    })
+
+    // Add all markers to the map at once
+    markersToAdd.forEach(marker => {
+      marker.addTo(mapInstanceRef.current)
       markersRef.current.push(marker)
     })
-  }, [filteredOrganizations, t, clearMarkers])
 
-  // Update markers when filtered organizations change
+    // End timing the marker rendering process
+    const renderEndTime = performance.now()
+    const renderDuration = renderEndTime - renderStartTime
+    console.log(`⏱️ Marker rendering completed in ${renderDuration.toFixed(2)}ms`)
+    console.log(`🎨 Rendered ${markersRef.current.length} markers on the map`)
+  }, [filteredOrganizations, clearMarkers, generatePopupContent])
+
+  // Debounced marker update to prevent excessive re-renders
   useEffect(() => {
-    updateMarkers()
+    const timeoutId = setTimeout(() => {
+      updateMarkers()
+    }, 100) // 100ms debounce
+
+    return () => clearTimeout(timeoutId)
   }, [updateMarkers])
 
   // Handle map clicks when in location selection mode
@@ -296,9 +339,8 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       onAdd: function () {
         const container = L.DomUtil.create('div', 'filter-control')
 
-        // Calculate initial counts
-        const hospitalCount = organizations.filter(org => org.type === 'hospital').length
-        const associationCount = organizations.filter(org => org.type === 'association').length
+        // Use memoized counts instead of recalculating
+        const { hospitalCount, associationCount } = filterCounts
 
         container.innerHTML = `
           <div class="filter-panel" id="filter-panel">
