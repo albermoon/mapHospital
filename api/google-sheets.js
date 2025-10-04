@@ -37,11 +37,15 @@ if (!global.fetch) {
   
           // GET request handler
           if (req.method === 'GET') {
+              // Start timing the Google Sheets API call
+              const apiStartTime = performance.now();
+              console.log(`🌐 Starting Google Sheets API call for sheet: ${req.query.sheet || 'default'}`);
+
               const url = new URL(GOOGLE_SCRIPT_URL);
               if (req.query.sheet) {
                   url.searchParams.set('sheet', req.query.sheet);
               }
-  
+
               const response = await fetch(url.toString(), { method: 'GET' });
               const text = await response.text();
               let data;
@@ -51,6 +55,11 @@ if (!global.fetch) {
                   console.error('Invalid response from Google Script:', text);
                   throw new Error('Failed to fetch data from Google Script');
               }
+
+              // End timing the Google Sheets API call
+              const apiEndTime = performance.now();
+              const apiDuration = apiEndTime - apiStartTime;
+              console.log(`⏱️ Google Sheets API call completed in ${apiDuration.toFixed(2)}ms`);
   
               if (data.status === 'error') {
                   return res.status(500).json(data);
