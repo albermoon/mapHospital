@@ -9,22 +9,43 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
   const [showResults, setShowResults] = useState(false)
   const searchInputRef = useRef(null)
   const containerRef = useRef(null)
+  const isInitialMount = useRef(true)
 
-  // Auto-expand on desktop, collapse on mobile
+  // Improved auto-expand logic
   useEffect(() => {
-    const handleResize = () => {
+    if (isInitialMount.current) {
       const isMobile = window.innerWidth <= 768
       if (!isMobile) {
         setIsExpanded(true)
-      } else {
-        setIsExpanded(false)
       }
+      isInitialMount.current = false
+    }
+  }, [])
+
+  // Search functionality
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      setShowResults(false)
+      return
     }
 
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    const query = searchQuery.toLowerCase().trim()
+    const filtered = organizations.filter(org => {
+      return (
+        org.name.toLowerCase().includes(query) ||
+        org.address.toLowerCase().includes(query) ||
+        org.city.toLowerCase().includes(query) ||
+        org.country.toLowerCase().includes(query) ||
+        (org.specialty && org.specialty.toLowerCase().includes(query)) ||
+        org.type.toLowerCase().includes(query)
+      )
+    })
+
+    setSearchResults(filtered.slice(0, 5))
+    setShowResults(filtered.length > 0)
+  }, [searchQuery, organizations])
+
 
   // Search functionality
   useEffect(() => {
@@ -55,12 +76,17 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         setShowResults(false)
+        // Don't collapse on mobile when clicking outside, only hide results
+        const isMobile = window.innerWidth <= 768
+        if (isMobile && !searchQuery) {
+          setIsExpanded(false)
+        }
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [searchQuery])
 
   const handleToggleSearch = () => {
     const isMobile = window.innerWidth <= 768
@@ -72,9 +98,9 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
           if (searchInputRef.current) {
             searchInputRef.current.focus()
           }
-        }, 300)
+        }, 100)
       } else {
-        // Clear search when collapsing
+        // Only clear search and hide results when collapsing
         setSearchQuery('')
         setShowResults(false)
       }
@@ -89,18 +115,25 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
     setSearchQuery('')
     setShowResults(false)
     onSelectOrganization(organization)
-    
-    // Collapse on mobile after selection
-    const isMobile = window.innerWidth <= 768
-    if (isMobile) {
-      setIsExpanded(false)
-    }
+
+    // Don't auto-collapse on mobile after selection
+    // Let user decide when to collapse
   }
 
   const handleInputFocus = () => {
     if (searchResults.length > 0) {
       setShowResults(true)
     }
+  }
+
+  // Handle input blur - don't collapse immediately
+  const handleInputBlur = (e) => {
+    // Only hide results on blur, don't collapse the search bar
+    setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        setShowResults(false)
+      }
+    }, 200)
   }
 
   const getTypeIcon = (type) => {
@@ -122,11 +155,13 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
         />
-        <button 
+        <button
           className="search-btn"
           onClick={handleToggleSearch}
           title={t('search') || 'Search'}
+          type="button"
         >
           <svg
             width="20"
@@ -142,7 +177,7 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
             <path d="m21 21-4.35-4.35" />
           </svg>
         </button>
-        
+
         {showResults && searchResults.length > 0 && (
           <div className="search-results">
             {searchResults.map(org => (
@@ -151,7 +186,7 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
                 className="search-result"
                 onClick={() => handleSelectResult(org)}
               >
-                <div 
+                <div
                   className="result-icon"
                   style={{ color: getTypeColor(org.type) }}
                 >
