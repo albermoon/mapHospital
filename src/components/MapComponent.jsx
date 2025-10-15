@@ -112,9 +112,9 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           <strong>${t('type')}:</strong> ${org.type === 'hospital' ? '🏥' : '👥'} ${typeLabel}
         </p>
         <p style="margin: 5px 0; font-size: 12px;">
-          <strong>📍 ${t('address')}:</strong><br>
-          <a href="#" class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
-             style="color: #007bff; text-decoration: none; cursor: pointer;">
+          <strong>📍 ${t('address')}:</strong>
+          <a class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
+             style="text-decoration:">
             ${org.address}
           </a>
         </p>

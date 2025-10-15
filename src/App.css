@@ -344,7 +344,7 @@ main {
   bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
-.add-btn{
+.add-btn {
   background: white;
   color: #2f3133;
   border: 2px solid #ffffff;
@@ -353,10 +353,11 @@ main {
   transition: all 0.2s ease;
   display: flex;
   justify-content: center;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
 }
+
 .geolocation-btn {
   background: white;
   color: #2f3133;
@@ -423,21 +424,23 @@ main {
 }
 
 .organization-popup .address-link {
-  color: #007bff !important;
+  color: inherit !important;
   text-decoration: none !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  padding: 2px 4px !important;
-  border-radius: 4px !important;
+  cursor: text !important;
+  pointer-events: auto !important;
+  padding: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+  user-select: text;
 }
 
 .organization-popup .address-link:hover {
-  background: #e3f2fd !important;
-  color: #0056b3 !important;
+  background: transparent !important;
+  color: inherit !important;
   text-decoration: none !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* ========================================
