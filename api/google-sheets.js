@@ -1,101 +1,120 @@
-// Polyfill fetch for Node.js if not available
-if (!global.fetch) {
+// Polyfill fetch for Node.js environments (like Vercel serverless)
+if (typeof fetch === 'undefined') {
     const { default: fetch } = await import('node-fetch');
     global.fetch = fetch;
-  }
-  
-  export default async function handler(req, res) {
-      const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
-  
-      if (!GOOGLE_SCRIPT_URL) {
-          return res.status(500).json({
-              status: 'error',
-              message: 'GOOGLE_SCRIPT_URL not set',
-          });
-      }
-  
-      try {
-          // POST request handler
-          if (req.method === 'POST') {
-              const response = await fetch(GOOGLE_SCRIPT_URL, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(req.body),
-              });
-  
-              const text = await response.text();
-              let data;
-              try {
-                  data = JSON.parse(text);
-              } catch {
-                  console.error('Invalid response from Google Script:', text);
-                  throw new Error('Failed to fetch data from Google Script');
-              }
-  
-              return res.json(data);
-          }
-  
-          // GET request handler
-          if (req.method === 'GET') {
-              // Start timing the Google Sheets API call
-              const apiStartTime = performance.now();
-              console.log(`🌐 Starting Google Sheets API call for sheet: ${req.query.sheet || 'default'}`);
+}
 
-              const url = new URL(GOOGLE_SCRIPT_URL);
-              if (req.query.sheet) {
-                  url.searchParams.set('sheet', req.query.sheet);
-              }
+export default async function handler(req, res) {
+    const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
 
-              const response = await fetch(url.toString(), { method: 'GET' });
-              const text = await response.text();
-              let data;
-              try {
-                  data = JSON.parse(text);
-              } catch {
-                  console.error('Invalid response from Google Script:', text);
-                  throw new Error('Failed to fetch data from Google Script');
-              }
+    if (!GOOGLE_SCRIPT_URL) {
+        console.error('❌ GOOGLE_SCRIPT_URL not set in environment variables.');
+        return res.status(500).json({
+            status: 'error',
+            message: 'GOOGLE_SCRIPT_URL not set',
+        });
+    }
 
-              // End timing the Google Sheets API call
-              const apiEndTime = performance.now();
-              const apiDuration = apiEndTime - apiStartTime;
-              console.log(`⏱️ Google Sheets API call completed in ${apiDuration.toFixed(2)}ms`);
-  
-              if (data.status === 'error') {
-                  return res.status(500).json(data);
-              }
-  
-              const processData = (items, type) =>
-                  items.map((item) => ({
-                      ID: item.ID,
-                      Name: item.Name,
-                      Type: type,
-                      Address: item.Address,
-                      Phone: item.Phone,
-                      Website: item.Website,
-                      Email: item.Email,
-                      Latitude: item.Latitude,
-                      Longitude: item.Longitude,
-                      Country: item.Country,
-                      City: item.City,
-                      Specialty: item.Specialty,
-                      Status: item.Status,
-                  }));
-  
-              const hospitales = processData(data.hospitales || [], 'Hospital');
-              const asociaciones = processData(data.asociaciones || [], 'Association');
-  
-              return res.json({
-                  status: 'success',
-                  data: [...hospitales, ...asociaciones],
-              });
-          }
-  
-          // Method not allowed
-          res.setHeader('Allow', ['GET', 'POST']);
-          res.status(405).end(`Method ${req.method} Not Allowed`);
-      } catch (err) {
-          console.error(err);
-          res.status(500).json({ status: 'error', message: err.message });
-      }
-  }
+    try {
+        // ---------------------------
+        // POST — Save data
+        // ---------------------------
+        if (req.method === 'POST') {
+            console.log('📤 Forwarding POST to Google Script...');
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(req.body),
+            });
+
+            const text = await response.text();
+            console.log('🧾 Raw response (POST):', text);
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                console.error('❌ Invalid JSON from Google Script (POST)');
+                throw new Error('Invalid response from Google Script');
+            }
+
+            return res.json(data);
+        }
+
+        // ---------------------------
+        // GET — Fetch data
+        // ---------------------------
+        if (req.method === 'GET') {
+            const sheet = req.query.sheet || 'Hospitales';
+            console.log(`🌐 Fetching data for sheet: ${sheet}`);
+
+            const start = performance.now();
+
+            const url = new URL(GOOGLE_SCRIPT_URL);
+            url.searchParams.set('sheet', sheet);
+
+            const response = await fetch(url.toString());
+            const text = await response.text();
+            console.log('🧾 Raw response (GET):', text);
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                console.error('❌ Invalid JSON from Google Script (GET)');
+                throw new Error('Invalid response from Google Script');
+            }
+
+            const duration = performance.now() - start;
+            console.log(`⏱️ Google Script responded in ${duration.toFixed(2)}ms`);
+
+            // Normalize combined data structure
+            const processData = (items, defaultType) =>
+                (items || []).map((item) => ({
+                    ID: item.ID || '',
+                    Name: item.Name || '',
+                    Type: item.Type || defaultType,
+                    Address: item.Address || '',
+                    Phone: item.Phone || '',
+                    Website: item.Website || '',
+                    Email: item.Email || '',
+                    Latitude: item.Latitude || '',
+                    Longitude: item.Longitude || '',
+                    Country: item.Country || '',
+                    City: item.City || '',
+                    Specialty: item.Specialty || '',
+                    Status: item.Status || '',
+                }));
+
+            // Support both direct-sheet and merged-sheet structures
+            let mergedData = [];
+            if (Array.isArray(data.data)) {
+                mergedData = data.data; // Already merged by Apps Script
+            } else {
+                mergedData = [
+                    ...processData(data.hospitales, 'Hospital'),
+                    ...processData(data.asociaciones, 'Association'),
+                    ...processData(data.organizaciones, 'Organization'),
+                ];
+            }
+
+            return res.json({
+                status: 'success',
+                data: mergedData,
+            });
+        }
+
+        res.setHeader('Allow', ['GET', 'POST']);
+        res.status(405).json({
+            status: 'error',
+            message: `Method ${req.method} Not Allowed`,
+        });
+
+    } catch (err) {
+        console.error('❌ Google Sheets API error:', err);
+        res.status(500).json({
+            status: 'error',
+            message: err.message || 'Unexpected server error',
+        });
+    }
+}

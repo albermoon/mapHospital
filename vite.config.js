@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-// Using ESM export with test section for Vitest
 
+// Custom loader for .arb files
 function arbLoader() {
   return {
     name: 'arb-loader',
@@ -18,6 +18,19 @@ function arbLoader() {
 
 export default defineConfig({
   plugins: [react(), arbLoader()],
+  server: {
+    proxy: {
+      '/api/google-sheets': {
+        target: 'https://script.google.com', // Google Apps Script domain
+        changeOrigin: true,
+        rewrite: (path) =>
+          path.replace(
+            /^\/api\/google-sheets/,
+            '/macros/s/AKfycby6wrNety9fK2swp1ZzDIOqBw_XeuiLtea3Pw6CWo_SRicDkSgXvnmAWxPak5m_p6SW/exec'
+          ),
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

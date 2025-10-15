@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import MapComponent from './components/MapComponent'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
 import LanguageSelector from './components/LanguageSelector'
@@ -8,77 +8,71 @@ import './App.css'
 
 function App() {
   const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALES)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [hasSwitchedToAsociaciones, setHasSwitchedToAsociaciones] = useState(false)
   const { t } = useTranslation()
+  const hasSwitchedRef = useRef(false)
 
-  // Hook to handle Google Sheets
   const { data, loading, error, connected, fetchData, saveData } = useGoogleSheets()
 
-  // State for organizations
   const [organizations, setOrganizations] = useState([])
   const [localOrganizations, setLocalOrganizations] = useState([])
 
-  // Fetch data on initial load and when sheet changes
+  // Load data on sheet change
   useEffect(() => {
     const loadData = async () => {
-      // Start timing the overall app loading process
-      const appLoadStartTime = performance.now()
       console.log(`🚀 Starting app load for sheet: ${currentSheet}`)
-
       try {
         await fetchData(currentSheet)
-        setIsInitialLoad(false)
-
-        // End timing the overall app loading process
-        const appLoadEndTime = performance.now()
-        const appLoadDuration = appLoadEndTime - appLoadStartTime
-        console.log(`⏱️ App load completed in ${appLoadDuration.toFixed(2)}ms`)
       } catch (err) {
         console.error('Failed to fetch data:', err)
       }
     }
-
     loadData()
   }, [currentSheet, fetchData])
 
-  // Memoize data transformation to prevent unnecessary recalculations
+  // Fallback to Asociaciones if Hospitales is empty
+  useEffect(() => {
+    if (!loading && !error && Array.isArray(data)) {
+      if (data.length <= 1 && currentSheet === SHEET_NAMES.HOSPITALES && !hasSwitchedRef.current) {
+        console.warn('⚠️ No data found in Hospitales, switching to Asociaciones...')
+        hasSwitchedRef.current = true
+        setCurrentSheet(SHEET_NAMES.ASOCIACIONES)
+      }
+    }
+  }, [data, loading, error, currentSheet])
+
+  // Helper: normalize text
+  const normalize = (str) =>
+    str
+      ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+      : ''
+
+  // Transform raw data into organizations
   const transformedOrganizations = useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      console.log("No valid data found");
-      return [];
+    if (!data || !Array.isArray(data) || data.length === 0) return []
+
+    const typeMappings = {
+      hospital: ['hospital', 'hospitales', 'clinica', 'centro medico'],
+      association: [
+        'socio', 'miembro'
+      ]
     }
 
-    // Start timing the data transformation process
-    const transformStartTime = performance.now()
-    console.log(`🔄 Starting data transformation for ${data.length} items`)
-
-    const transformedData = data
+    return data
       .map(item => {
-        let lat = parseFloat(item.Latitude);
-        let lng = parseFloat(item.Longitude);
+        const lat = parseFloat(item.Latitude)
+        const lng = parseFloat(item.Longitude)
 
-        // Check if coordinates are valid
-        if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-          console.warn('Invalid coordinates for item:', item.Name || 'Unknown', 'Lat:', item.Latitude, 'Lng:', item.Longitude);
-          return null;
-        }
+        if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null
 
-        // Normalize type
-        let type = (item.Type || '').trim().toLowerCase();
-
-        if (['hospital', 'hospitales'].includes(type)) {
-          type = 'hospital';
-        } else if (['association', 'associations', 'asociación', 'asociacion'].includes(type)) {
-          type = 'association';
-        } else {
-          console.warn('Unknown organization type, keeping raw value:', item.Type);
-          type = type || 'hospital'; // fallback only if empty
-        }
+        const rawType = normalize(item.Type)
+        const mappedType =
+          Object.entries(typeMappings).find(([_, values]) => values.includes(rawType))?.[0] || 'association'
 
         return {
           id: item.ID || `ID_${Date.now()}_${Math.random()}`,
           name: item.Name,
-          type: type,
+          type: mappedType,
           address: item.Address || '',
           phone: item.Phone || '',
           website: item.Website || '',
@@ -88,35 +82,27 @@ function App() {
           city: item.City || '',
           specialty: item.Specialty || '',
           status: item.Status || 0
-        };
+        }
       })
-      .filter(org => org !== null);
-
-    // End timing the data transformation process
-    const transformEndTime = performance.now()
-    const transformDuration = transformEndTime - transformStartTime
-    console.log(`⏱️ Data transformation completed in ${transformDuration.toFixed(2)}ms`)
-    console.log(`📊 Transformed ${transformedData.length} valid organizations`)
-
-    return transformedData;
-  }, [data]);
+      .filter(org => org !== null)
+  }, [data])
 
   // Update organizations when transformed data changes
   useEffect(() => {
-    setOrganizations(transformedOrganizations);
-  }, [transformedOrganizations]);
+    setOrganizations(prevOrgs => {
+      // Create a map of existing org IDs
+      const orgMap = new Map(prevOrgs.map(o => [o.id, o]))
+      // Add/overwrite with new transformed organizations
+      transformedOrganizations.forEach(org => orgMap.set(org.id, org))
+      return Array.from(orgMap.values())
+    })
+  }, [transformedOrganizations])
 
+  // Add new organization
   const handleAddOrganization = async (organization) => {
-    const newOrganization = {
-      ...organization,
-      id: `ID_${Date.now()}_${Math.random()}`
-    }
-
-    // Add to local state
+    const newOrganization = { ...organization, id: `ID_${Date.now()}_${Math.random()}` }
     setLocalOrganizations(prev => [...prev, newOrganization])
     setOrganizations(prev => [...prev, newOrganization])
-
-    console.log('Local add:', newOrganization)
 
     try {
       await saveData({
@@ -137,109 +123,78 @@ function App() {
       console.log('Saved to Google Sheets!')
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
-      // Revert local changes if save fails
       setLocalOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
       setOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
     }
   }
 
-  const handleSheetChange = (sheetName) => {
-    setCurrentSheet(sheetName)
-  }
-
-  const handleSyncWithLocal = (localOrgs) => {
-    // Implement synchronization logic here
-    console.log("Syncing local organizations:", localOrgs);
-    // This would typically send local organizations to Google Sheets
-    alert("Sync functionality would be implemented here");
-  }
-
-  // Show loading only on initial load
-  if (isInitialLoad && organizations.length === 0) {
-    return (
-      <div className="App">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column'
-        }}>
-          <div style={{ fontSize: '18px', marginBottom: '20px' }}>
-            🏥 Loading Hospital Map...
-          </div>
-          <div style={{
-            width: '300px',
-            height: '6px',
-            backgroundColor: '#f0f0f0',
-            borderRadius: '3px',
-            overflow: 'hidden',
-            marginBottom: '10px'
-          }}>
-            <div style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: '#007bff',
-              borderRadius: '3px',
-              animation: 'pulse 1.5s ease-in-out infinite'
-            }} />
-          </div>
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-            Status: {connected ? 'Connected' : 'Connecting to Google Sheets...'}
-          </div>
-          <div style={{ marginTop: '5px', fontSize: '11px', color: '#999' }}>
-            This may take a few seconds for large datasets
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show error state
-  if (error && organizations.length === 0) {
-    return (
-      <div className="App">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column',
-          color: 'red'
-        }}>
-          <div>Error loading data: {error}</div>
-          <button
-            onClick={() => fetchData(currentSheet)}
-            style={{ marginTop: '10px', padding: '5px 10px' }}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    )
-  }
+  const handleSheetChange = (sheetName) => setCurrentSheet(sheetName)
+  const handleSyncWithLocal = (localOrgs) => alert("Sync functionality would be implemented here")
 
   return (
     <div className="App">
-      {/* Header with title and language selector */}
       <header className="App-header">
         <h1>{t('appTitle')}</h1>
         <LanguageSelector />
       </header>
 
       <main>
+        <div style={{ margin: '10px 0' }}>
+          <label>
+            Select sheet:
+            <select
+              value={currentSheet}
+              onChange={(e) => handleSheetChange(e.target.value)}
+              style={{ marginLeft: '10px' }}
+            >
+              {Object.values(SHEET_NAMES).map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <GoogleSheetsStatus
           loading={loading}
           error={error}
           onSyncWithLocal={handleSyncWithLocal}
           localOrganizations={localOrganizations}
         />
-        <MapComponent
-          organizations={organizations}
-          onAddOrganization={handleAddOrganization}
-          loading={loading && organizations.length === 0}
-          error={error}
-        />
+
+        <div className="map-container">
+          <MapComponent
+            organizations={organizations}
+            onAddOrganization={handleAddOrganization}
+            loading={loading} // Map itself can optionally use this
+            error={error}
+          />
+
+          {/* Transparent overlay while loading */}
+          {loading && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(255,255,255,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
+              pointerEvents: 'none'
+            }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                border: '6px solid #ccc',
+                borderTop: '6px solid #007bff',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   )
