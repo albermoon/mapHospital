@@ -1,7 +1,4 @@
-/* ========================================
-   BASE STYLES
-   ======================================== */
-
+/* BASE */
 .App {
   text-align: center;
   min-height: 100vh;
@@ -32,18 +29,11 @@ main {
   position: relative;
 }
 
-/* ========================================
-     MAP CONTAINER
-     ======================================== */
-
+/* MAP */
 .map-container {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  /* top:0; right:0; bottom:0; left:0; */
 }
 
 .map-viewport {
@@ -55,14 +45,11 @@ main {
   cursor: crosshair;
 }
 
-/* ========================================
-     LANGUAGE SELECTOR
-     ======================================== */
-
+/* LANGUAGE SELECTOR */
 .language-selector {
   display: flex;
   gap: 8px;
-  background: white;
+  background: #fff;
   border-radius: 20px;
   padding: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -73,7 +60,7 @@ main {
   height: 40px;
   border-radius: 50%;
   border: 2px solid #e9ecef;
-  background: white;
+  background: #fff;
   color: #495057;
   font-weight: 600;
   cursor: pointer;
@@ -91,15 +78,12 @@ main {
 
 .language-btn.active {
   background: #007bff;
-  color: white;
+  color: #fff;
   border-color: #007bff;
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
-/* ========================================
-     SEARCH CONTROL
-     ======================================== */
-
+/* SEARCH */
 .search-control {
   position: absolute;
   top: 30px;
@@ -113,7 +97,7 @@ main {
 .search-container {
   display: flex;
   align-items: center;
-  background: white;
+  background: #fff;
   border-radius: 25px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
@@ -146,7 +130,7 @@ main {
 
 .search-btn {
   background: #007bff;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -170,7 +154,7 @@ main {
   position: fixed;
   top: 160px;
   right: 40px;
-  background: white;
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   margin-top: 8px;
@@ -223,10 +207,7 @@ main {
   line-height: 1.3;
 }
 
-/* ========================================
-     FILTER CONTROL
-     ======================================== */
-
+/* FILTER */
 .filter-control {
   position: absolute;
   top: 20px;
@@ -235,19 +216,19 @@ main {
 }
 
 .filter-panel {
-  background: white;
+  background: #fff;
   padding: 12px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   min-width: 200px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
   transform-origin: top left;
   opacity: 1;
   transform: scale(1);
 }
 
 .filter-panel.collapsing {
-  transform: scale(0.8);
+  transform: scale(0.92);
   opacity: 0;
 }
 
@@ -259,7 +240,7 @@ main {
 .filter-toggle {
   display: none;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -272,7 +253,6 @@ main {
 }
 
 .filter-toggle:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
   transform: scale(1.05);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
@@ -323,10 +303,7 @@ main {
   color: #007bff;
 }
 
-/* ========================================
-     FLOATING ACTION BUTTONS
-     ======================================== */
-
+/* FLOATING ACTION BUTTONS - shared */
 .add-control,
 .geolocation-control {
   position: absolute;
@@ -334,6 +311,7 @@ main {
   z-index: 1000;
 }
 
+/* safe-area fallback then env-based (kept for compatibility) */
 .geolocation-control {
   bottom: 90px;
   bottom: calc(90px + env(safe-area-inset-bottom));
@@ -344,10 +322,11 @@ main {
   bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
+/* per-button tweaks */
 .add-btn {
-  background: white;
+  background: #fff;
   color: #2f3133;
-  border: 2px solid #ffffff;
+  border: 2px solid #fff;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -358,10 +337,17 @@ main {
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
 }
 
+.add-btn:hover {
+  background: #007bff;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
 .geolocation-btn {
-  background: white;
+  background: #fff;
   color: #2f3133;
-  border: 2px solid #ffffff;
+  border: 2px solid #fff;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -373,32 +359,28 @@ main {
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
 }
 
-.add-btn:hover,
 .geolocation-btn:hover {
   background: #007bff;
-  color: white;
+  color: #fff;
   transform: scale(1.05);
   box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
 }
 
-.add-icon {
+.add-btn .add-icon {
   font-size: 32px;
   font-weight: 300;
 }
 
-.geolocation-icon {
+.geolocation-btn .geolocation-icon {
   font-size: 22px;
   color: #5f6368;
 }
 
 .geolocation-btn:hover .geolocation-icon {
-  color: white;
+  color: #fff;
 }
 
-/* ========================================
-     ORGANIZATION POPUP
-     ======================================== */
-
+/* ORGANIZATION POPUP */
 .organization-popup {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -423,36 +405,31 @@ main {
   text-decoration: underline;
 }
 
+/* Reduced-force overrides for address link — prefer specificity, avoid !important */
 .organization-popup .address-link {
-  color: inherit !important;
-  text-decoration: none !important;
-  cursor: text !important;
-  pointer-events: auto !important;
-  padding: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  transition: none !important;
+  color: inherit;
+  text-decoration: none;
+  cursor: text;
+  pointer-events: auto;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: none;
   user-select: text;
 }
 
 .organization-popup .address-link:hover {
-  background: transparent !important;
-  color: inherit !important;
-  text-decoration: none !important;
-  transform: none !important;
-  box-shadow: none !important;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  transform: none;
+  box-shadow: none;
 }
 
-/* ========================================
-     LOCATION SELECTION OVERLAY
-     ======================================== */
-
+/* LOCATION SELECTION OVERLAY */
 .location-selection-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.1);
   z-index: 1000;
   pointer-events: none;
@@ -463,7 +440,7 @@ main {
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: white;
+  background: #fff;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -491,7 +468,7 @@ main {
 
 .location-cancel-btn {
   background: #6c757d;
-  color: white;
+  color: #fff;
   border: none;
   padding: 10px 20px;
   border-radius: 6px;
@@ -507,26 +484,11 @@ main {
   transform: translateY(-1px);
 }
 
-/* ========================================
-     ANIMATIONS
-     ======================================== */
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
-}
-
+/* ANIMATIONS (kept only what's used) */
 @keyframes expandPanel {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(-10px);
+    transform: scale(0.9) translateY(-8px);
     max-height: 50px;
   }
 
@@ -546,18 +508,13 @@ main {
 
   to {
     opacity: 0;
-    transform: scale(0.8) translateY(-10px);
+    transform: scale(0.9) translateY(-8px);
     max-height: 50px;
   }
 }
 
-/* ========================================
-     MOBILE STYLES
-     ======================================== */
-
+/* MOBILE (<=768px) */
 @media (max-width: 768px) {
-
-  /* Header */
   .App-header {
     flex-wrap: wrap;
     justify-content: space-between;
@@ -568,7 +525,6 @@ main {
     font-size: 1.2rem;
   }
 
-  /* Language selector */
   .language-selector {
     gap: 6px;
     padding: 6px;
@@ -580,13 +536,11 @@ main {
     font-size: 12px;
   }
 
-  /* Map container */
   .map-container {
     height: 100vh;
     height: calc(100vh - env(safe-area-inset-bottom));
   }
 
-  /* Search control */
   .search-control {
     top: 25px;
     top: max(25px, env(safe-area-inset-top));
@@ -632,7 +586,6 @@ main {
     width: 97%;
   }
 
-  /* Filter control */
   .filter-control {
     top: 15px;
     top: max(15px, env(safe-area-inset-top));
@@ -662,7 +615,6 @@ main {
 
   .filter-panel.expanded {
     width: 200px;
-    height: auto;
     padding: 12px;
     max-height: 300px;
     animation: expandPanel 0.3s forwards;
@@ -679,7 +631,6 @@ main {
     animation: collapsePanel 0.3s forwards;
   }
 
-  /* Floating action buttons - Fixed for mobile bar */
   .geolocation-control,
   .add-control {
     right: 15px;
@@ -702,7 +653,6 @@ main {
     height: 50px;
   }
 
-  /* Location selection banner */
   .location-selection-banner {
     top: 10px;
     left: 10px;
@@ -713,10 +663,7 @@ main {
   }
 }
 
-/* ========================================
-     SMALL MOBILE STYLES
-     ======================================== */
-
+/* SMALL MOBILE (<=480px) */
 @media (max-width: 480px) {
   .search-container.expanded {
     width: 180px;
