@@ -63,8 +63,6 @@ export default function ChecklistReporter() {
         `GET            ${checklist.GET}`,
         ''
       ]
-      // eslint-disable-next-line no-console
-      console.log(lines.join('\n'))
     }
   }
 }
