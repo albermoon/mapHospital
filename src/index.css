@@ -4,7 +4,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -36,11 +38,11 @@ code {
 
 /* Mobile responsive controls */
 @media (max-width: 768px) {
-  
+
   .leaflet-popup-content {
     font-size: 12px;
   }
-  
+
   .leaflet-popup-content-wrapper {
     padding: 8px;
   }
@@ -62,7 +64,7 @@ code {
 
 .location-confirmation-popup button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .location-confirmation-popup #confirm-location-btn:hover {

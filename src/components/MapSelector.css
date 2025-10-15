@@ -31,6 +31,7 @@
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -96,7 +97,7 @@
   z-index: 1;
 }
 
-.map-selector-viewport  {
+.map-selector-viewport {
   z-index: 2;
 }
 
@@ -209,37 +210,37 @@
   .map-selector-overlay {
     padding: 10px;
   }
-  
+
   .map-selector-container {
     max-height: 95vh;
   }
-  
+
   .map-selector-header {
     padding: 16px 20px;
   }
-  
+
   .map-selector-header h3 {
     font-size: 18px;
   }
-  
+
   .map-selector-instructions {
     padding: 12px 20px;
   }
-  
+
   .map-selector-viewport {
     height: 300px;
   }
-  
+
   .map-selector-actions {
     padding: 16px 20px;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .auto-save-info {
     text-align: center;
   }
-  
+
   .btn-secondary {
     width: 100%;
   }

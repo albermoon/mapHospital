@@ -166,7 +166,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
     // Batch marker creation for better performance
     const markersToAdd = []
-    
+
     filteredOrganizations.forEach((org, index) => {
       if (!org.coordinates || org.coordinates.length !== 2) {
         console.warn('Invalid coordinates for org:', org)

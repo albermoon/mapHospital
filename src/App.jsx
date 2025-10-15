@@ -168,10 +168,10 @@ function App() {
           <div style={{ fontSize: '18px', marginBottom: '20px' }}>
             🏥 Loading Hospital Map...
           </div>
-          <div style={{ 
-            width: '300px', 
-            height: '6px', 
-            backgroundColor: '#f0f0f0', 
+          <div style={{
+            width: '300px',
+            height: '6px',
+            backgroundColor: '#f0f0f0',
             borderRadius: '3px',
             overflow: 'hidden',
             marginBottom: '10px'

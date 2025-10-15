@@ -129,21 +129,20 @@
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .status-actions {
     flex-direction: column;
   }
-  
+
   .btn-sync {
     width: 100%;
   }
-  
+
   .env-details {
     grid-template-columns: 1fr;
   }
-  
+
   .debug-info pre {
     font-size: 0.7rem;
   }
 }
-

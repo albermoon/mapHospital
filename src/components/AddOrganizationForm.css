@@ -29,6 +29,7 @@
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -370,7 +371,7 @@
   .form-row:has(.form-group:nth-child(2)) {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   .form-container {
     max-width: 700px;
   }
@@ -380,41 +381,41 @@
   .form-overlay {
     padding: 10px;
   }
-  
+
   .form-container {
     max-height: 95vh;
   }
-  
+
   .form-header {
     padding: 20px 20px 0 20px;
   }
-  
+
   .form-header h2 {
     font-size: 20px;
   }
-  
+
   .add-form {
     padding: 0 20px 20px 20px;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .btn-primary,
   .btn-secondary {
     width: 100%;
   }
-  
+
   .map-selection-mode {
     padding: 20px;
   }
-  
+
   .map-selection-actions {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .location-info {
     text-align: center;
   }
