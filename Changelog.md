@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.1] - 16-10-2025
+## [1.1.2] - 16-10-2025
 
 ### Added
 - Google Sheets API handler (`/api/google-sheets.js`) for GET/POST requests
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Correctly memoized popup content to avoid unnecessary re-renders
 - Fixed Leaflet icon path issues
 - Filter counts now update correctly without infinite loops
-- Speciality not showing up nor posting
+- Fixed Speciality not showing up nor posting
 - Fixed filter not hiding both Hospitales and Asociaciones when prompted
 - Fixed an interaction bewtween the fetch and the cache, sometimes it fetch the data of one, then took it from the cache, doubling the result
 
