@@ -54,9 +54,9 @@ function App() {
           status: item.Status || 0
         }
       })
-      .filter(org => org !== null)
+      .filter(org => org !== null && org.status === 1)
   }
-
+  
   useEffect(() => {
     const loadSheets = async () => {
       try {
@@ -114,7 +114,7 @@ function App() {
         Country: organization.country,
         City: organization.city,
         Speciality: organization.speciality,
-        Status: organization.status || 1
+        Status: organization.status || 0
       })
 
       if (res.newId) {

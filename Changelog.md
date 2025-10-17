@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.2] - 16-10-2025
+## [1.1.3] - 16-10-2025
 
 ### Added
 - Google Sheets API handler (`/api/google-sheets.js`) for GET/POST requests
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MapComponent` now preserves markers when switching sheets
 - Performance logging added for API calls and marker rendering
 - Modified the logic behind the ID to increment from previous ID instead of creating new ones
+- Status now defaults to 0, and only shows entries with status == 1
 
 ### Removed
 - N/A
