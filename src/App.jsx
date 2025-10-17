@@ -124,8 +124,10 @@ function App() {
       }
 
       console.log('Saved to Google Sheets!')
+      alert(`✅ ${organization.name} added successfully!`)
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
+      alert(`❌ Failed to save: ${err.message || err}`)
       setLocalOrganizations(prev => prev.filter(org => org !== organization))
       setOrganizations(prev => prev.filter(org => org !== organization))
     }
