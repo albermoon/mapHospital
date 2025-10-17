@@ -12,58 +12,48 @@ export function useGoogleSheets() {
   const [error, setError] = useState(null)
   const [connected, setConnected] = useState(false)
 
-  /**
-   * Fetch data from Google Apps Script.
-   * Always returns the full dataset from the selected sheet.
-   */
   const fetchData = useCallback(async (sheetName) => {
     setLoading(true)
     setError(null)
 
-    // Start timing the download process
     const downloadStartTime = performance.now()
     console.log(`🚀 Starting data download for sheet: ${sheetName}`)
 
     try {
-      let responseData
-
       const res = await fetch(
         `/api/google-sheets?sheet=${sheetName}`,
         { method: 'GET' }
       )
+
       if (!res.ok) {
         throw new Error(`HTTP error ${res.status}`)
       }
 
       const json = await res.json()
-      console.log("API Response:", json)
+      console.log('API Response:', json)
 
       if (json.status === 'success') {
-        responseData = json.data || []
+        const responseData = json.data || []
+        setData(responseData)
         setConnected(true)
+        const downloadEndTime = performance.now()
+        console.log(`⏱️ Data download completed in ${(downloadEndTime - downloadStartTime).toFixed(2)}ms`)
+        console.log(`📊 Downloaded ${responseData.length} organizations`)
+
+        return responseData
       } else {
         throw new Error(json.message || 'Unknown error from API')
       }
-
-      // End timing the download process
-      const downloadEndTime = performance.now()
-      const downloadDuration = downloadEndTime - downloadStartTime
-      console.log(`⏱️ Data download completed in ${downloadDuration.toFixed(2)}ms`)
-      console.log(`📊 Downloaded ${responseData.length} organizations`)
-
-      setData(responseData)
     } catch (err) {
-      console.error("❌ Fetch failed:", err)
+      console.error('❌ Fetch failed:', err)
       setError(err.message)
       setData([])
+      return []
     } finally {
       setLoading(false)
     }
   }, [])
 
-  /**
-   * Save data back to Google Apps Script.
-   */
   const saveData = useCallback(async (organization) => {
     try {
       const res = await fetch('/api/google-sheets', {
@@ -77,7 +67,7 @@ export function useGoogleSheets() {
       }
 
       const json = await res.json()
-      console.log("Save response:", json)
+      console.log('Save response:', json)
 
       if (json.status !== 'success') {
         throw new Error(json.message || 'Save failed')
@@ -85,7 +75,7 @@ export function useGoogleSheets() {
 
       return json
     } catch (err) {
-      console.error("❌ Save failed:", err)
+      console.error('❌ Save failed:', err)
       throw err
     }
   }, [])

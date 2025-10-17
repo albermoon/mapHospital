@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import MapComponent from './components/MapComponent'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
 import LanguageSelector from './components/LanguageSelector'
@@ -7,62 +7,33 @@ import { useTranslation } from './utils/i18n'
 import './App.css'
 
 function App() {
-  const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALES)
-  const [hasSwitchedToAsociaciones, setHasSwitchedToAsociaciones] = useState(false)
   const { t } = useTranslation()
-  const hasSwitchedRef = useRef(false)
-
-  const { data, loading, error, connected, fetchData, saveData } = useGoogleSheets()
+  const { data, loading, error, fetchData, saveData } = useGoogleSheets()
 
   const [organizations, setOrganizations] = useState([])
   const [localOrganizations, setLocalOrganizations] = useState([])
+  const [sheetData, setSheetData] = useState({})
+  const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALES)
 
-  // Load data on sheet change
-  useEffect(() => {
-    const loadData = async () => {
-      console.log(`🚀 Starting app load for sheet: ${currentSheet}`)
-      try {
-        await fetchData(currentSheet)
-      } catch (err) {
-        console.error('Failed to fetch data:', err)
-      }
-    }
-    loadData()
-  }, [currentSheet, fetchData])
+  // Track loading per sheet
+  const [loadingSheets, setLoadingSheets] = useState({
+    [SHEET_NAMES.HOSPITALES]: true,
+    [SHEET_NAMES.ASOCIACIONES]: true
+  })
 
-  // Fallback to Asociaciones if Hospitales is empty
-  useEffect(() => {
-    if (!loading && !error && Array.isArray(data)) {
-      if (data.length <= 1 && currentSheet === SHEET_NAMES.HOSPITALES && !hasSwitchedRef.current) {
-        console.warn('⚠️ No data found in Hospitales, switching to Asociaciones...')
-        hasSwitchedRef.current = true
-        setCurrentSheet(SHEET_NAMES.ASOCIACIONES)
-      }
-    }
-  }, [data, loading, error, currentSheet])
-
-  // Helper: normalize text
-  const normalize = (str) =>
-    str
-      ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
-      : ''
-
-  // Transform raw data into organizations
-  const transformedOrganizations = useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) return []
-
+  const transformSheet = (sheetArray) => {
     const typeMappings = {
       hospital: ['hospital', 'hospitales', 'clinica', 'centro medico'],
-      association: [
-        'socio', 'miembro'
-      ]
+      association: ['socio', 'miembro']
     }
 
-    return data
+    const normalize = (str) =>
+      str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : ''
+
+    return sheetArray
       .map(item => {
         const lat = parseFloat(item.Latitude)
         const lng = parseFloat(item.Longitude)
-
         if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null
 
         const rawType = normalize(item.Type)
@@ -70,7 +41,7 @@ function App() {
           Object.entries(typeMappings).find(([_, values]) => values.includes(rawType))?.[0] || 'association'
 
         return {
-          id: item.ID || `ID_${Date.now()}_${Math.random()}`,
+          id: item.ID,
           name: item.Name,
           type: mappedType,
           address: item.Address || '',
@@ -80,56 +51,86 @@ function App() {
           coordinates: [lat, lng],
           country: item.Country || '',
           city: item.City || '',
-          specialty: item.Specialty || '',
+          speciality: item.Speciality || '',
           status: item.Status || 0
         }
       })
       .filter(org => org !== null)
-  }, [data])
+  }
 
-  // Update organizations when transformed data changes
+  // Load sheets sequentially
   useEffect(() => {
-    setOrganizations(prevOrgs => {
-      // Create a map of existing org IDs
-      const orgMap = new Map(prevOrgs.map(o => [o.id, o]))
-      // Add/overwrite with new transformed organizations
-      transformedOrganizations.forEach(org => orgMap.set(org.id, org))
-      return Array.from(orgMap.values())
-    })
-  }, [transformedOrganizations])
+    const loadSheets = async () => {
+      try {
+        const hospitalesData = await fetchData(SHEET_NAMES.HOSPITALES)
+        setSheetData(prev => ({
+          ...prev,
+          [SHEET_NAMES.HOSPITALES]: transformSheet(hospitalesData)
+        }))
+        setLoadingSheets(prev => ({ ...prev, [SHEET_NAMES.HOSPITALES]: false }))
 
-  // Add new organization
+        const asociacionesData = await fetchData(SHEET_NAMES.ASOCIACIONES)
+        setSheetData(prev => ({
+          ...prev,
+          [SHEET_NAMES.ASOCIACIONES]: transformSheet(asociacionesData)
+        }))
+        setLoadingSheets(prev => ({ ...prev, [SHEET_NAMES.ASOCIACIONES]: false }))
+      } catch (err) {
+        console.error('Error fetching sheets', err)
+      }
+    }
+
+    loadSheets()
+  }, [fetchData])
+
+  // Only merge sheets once BOTH are loaded
+  useEffect(() => {
+    const allLoaded = Object.values(loadingSheets).every(v => v === false)
+    if (allLoaded) {
+      const merged = Object.values(sheetData).flat()
+      setOrganizations(merged)
+    }
+  }, [loadingSheets, sheetData])
+
   const handleAddOrganization = async (organization) => {
-    const newOrganization = { ...organization, id: `ID_${Date.now()}_${Math.random()}` }
-    setLocalOrganizations(prev => [...prev, newOrganization])
-    setOrganizations(prev => [...prev, newOrganization])
+    setLocalOrganizations(prev => [...prev, organization])
+    setOrganizations(prev => [...prev, organization])
 
     try {
-      await saveData({
-        ID: newOrganization.id,
-        Name: newOrganization.name,
-        Type: newOrganization.type,
-        Address: newOrganization.address,
-        Phone: newOrganization.phone,
-        Website: newOrganization.website,
-        Email: newOrganization.email,
-        Latitude: newOrganization.coordinates[0],
-        Longitude: newOrganization.coordinates[1],
-        Country: newOrganization.country,
-        City: newOrganization.city,
-        Specialty: newOrganization.specialty,
-        Status: 1
+      const res = await saveData({
+        Name: organization.name,
+        Type: organization.type,
+        Address: organization.address,
+        Phone: organization.phone,
+        Website: organization.website,
+        Email: organization.email,
+        Latitude: organization.coordinates[0],
+        Longitude: organization.coordinates[1],
+        Country: organization.country,
+        City: organization.city,
+        Speciality: organization.speciality,
+        Status: organization.status || 1
       })
+
+      if (res.newId) {
+        setOrganizations(prev =>
+          prev.map(org => org === organization ? { ...org, id: res.newId } : org)
+        )
+      }
+
       console.log('Saved to Google Sheets!')
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
-      setLocalOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
-      setOrganizations(prev => prev.filter(org => org.id !== newOrganization.id))
+      setLocalOrganizations(prev => prev.filter(org => org !== organization))
+      setOrganizations(prev => prev.filter(org => org !== organization))
     }
   }
 
   const handleSheetChange = (sheetName) => setCurrentSheet(sheetName)
-  const handleSyncWithLocal = (localOrgs) => alert("Sync functionality would be implemented here")
+  const handleSyncWithLocal = () => alert("Sync functionality would be implemented here")
+
+  // Overlay stays until all sheets finish
+  const anySheetLoading = Object.values(loadingSheets).some(v => v === true)
 
   return (
     <div className="App">
@@ -155,7 +156,7 @@ function App() {
         </div>
 
         <GoogleSheetsStatus
-          loading={loading}
+          loading={anySheetLoading}
           error={error}
           onSyncWithLocal={handleSyncWithLocal}
           localOrganizations={localOrganizations}
@@ -163,14 +164,13 @@ function App() {
 
         <div className="map-container">
           <MapComponent
-            organizations={organizations}
+            organizations={organizations} // markers only appear once both sheets loaded
             onAddOrganization={handleAddOrganization}
-            loading={loading} // Map itself can optionally use this
+            loading={anySheetLoading}
             error={error}
           />
 
-          {/* Transparent overlay while loading */}
-          {loading && (
+          {anySheetLoading && (
             <div style={{
               position: 'absolute',
               top: 0,

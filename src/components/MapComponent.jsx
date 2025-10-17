@@ -147,6 +147,12 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return
 
+    // Early return if no organizations to render
+    if (!filteredOrganizations || filteredOrganizations.length === 0) {
+      // Skip useless log
+      return
+    }
+
     // Start timing the marker rendering process
     const renderStartTime = performance.now()
     console.log(`🎨 Starting marker rendering for ${filteredOrganizations.length} organizations`)
@@ -154,17 +160,10 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     // Clear existing markers
     clearMarkers()
 
-    // Early return if no organizations
-    if (filteredOrganizations.length === 0) {
-      console.log(`⏱️ No markers to render`)
-      return
-    }
-
     const isMobile = window.innerWidth <= 768
     const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon
     const associationIconToUse = isMobile ? associationIconMobile : associationIcon
 
-    // Batch marker creation for better performance
     const markersToAdd = []
 
     filteredOrganizations.forEach((org, index) => {
@@ -199,6 +198,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     console.log(`⏱️ Marker rendering completed in ${renderDuration.toFixed(2)}ms`)
     console.log(`🎨 Rendered ${markersRef.current.length} markers on the map`)
   }, [filteredOrganizations, clearMarkers, generatePopupContent])
+
 
   // Debounced marker update to prevent excessive re-renders
   useEffect(() => {
