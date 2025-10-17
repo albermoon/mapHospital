@@ -36,13 +36,15 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   // Initialize organizations from props
   useEffect(() => {
     if (propOrganizations && propOrganizations.length > 0) {
-      setOrganizations(propOrganizations)
-      setFilteredOrganizations(propOrganizations)
+      const activeOrgs = propOrganizations.filter(org => org.status === 1)
+      setOrganizations(activeOrgs)
+      setFilteredOrganizations(activeOrgs)
     } else {
       setOrganizations([])
       setFilteredOrganizations([])
     }
   }, [propOrganizations])
+
 
   // Filter organizations based on toggle states
   useEffect(() => {
