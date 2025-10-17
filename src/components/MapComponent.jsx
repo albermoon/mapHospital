@@ -134,30 +134,24 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             <strong>✉️ ${t('email')}:</strong> ${org.email}
           </p>
         ` : ''}
-        ${org.specialty ? `
+        ${org.speciality ? `
           <p style="margin: 5px 0; font-size: 12px;">
-            <strong>🏷️ ${t('specialty')}:</strong> ${org.specialty}
+            <strong>🏷️ ${t('speciality')}:</strong> ${org.speciality}
           </p>
         ` : ''}
       </div>
     `
   }, [t])
 
-  // Update markers on the map with performance optimizations
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return
-
-    // Early return if no organizations to render
     if (!filteredOrganizations || filteredOrganizations.length === 0) {
-      // Skip useless log
       return
     }
 
-    // Start timing the marker rendering process
     const renderStartTime = performance.now()
     console.log(`🎨 Starting marker rendering for ${filteredOrganizations.length} organizations`)
 
-    // Clear existing markers
     clearMarkers()
 
     const isMobile = window.innerWidth <= 768
@@ -180,7 +174,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
       markersToAdd.push(marker)
 
-      // Log progress for large datasets
       if (filteredOrganizations.length > 100 && index % 50 === 0) {
         console.log(`🎨 Prepared ${index + 1}/${filteredOrganizations.length} markers`)
       }
@@ -200,16 +193,14 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   }, [filteredOrganizations, clearMarkers, generatePopupContent])
 
 
-  // Debounced marker update to prevent excessive re-renders
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       updateMarkers()
-    }, 100) // 100ms debounce
+    }, 100)
 
     return () => clearTimeout(timeoutId)
   }, [updateMarkers])
 
-  // Handle map clicks when in location selection mode
   useEffect(() => {
     if (!map || !isSelectingLocation) return
 
@@ -217,7 +208,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       if (isSelectingLocation && locationSelectionCallback) {
         const { lat, lng } = e.latlng
 
-        // Add a marker at the clicked location for visual feedback
         if (markerRef.current) {
           map.removeLayer(markerRef.current)
         }

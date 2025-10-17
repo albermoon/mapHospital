@@ -22,7 +22,7 @@ const AddOrganizationForm = ({
     email: '',
     country: '',
     city: '',
-    specialty: '',
+    speciality: '',
     coordinates: null
   })
 
@@ -79,7 +79,7 @@ const AddOrganizationForm = ({
       coordinates: formData.coordinates,
       country: formData.country.trim(),
       city: formData.city.trim(),
-      specialty: formData.specialty.trim() || null
+      speciality: formData.speciality.trim() || null
     }
 
     onAdd(newOrganization)
@@ -97,7 +97,7 @@ const AddOrganizationForm = ({
       email: '',
       country: '',
       city: '',
-      specialty: '',
+      speciality: '',
       coordinates: null
     })
     setErrors({})
@@ -267,17 +267,17 @@ const AddOrganizationForm = ({
             </div>
           </div>
 
-          {/* Specialty */}
+          {/* Speciality */}
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="specialty">{t('specialty')}</label>
+              <label htmlFor="speciality">{t('speciality')}</label>
               <input
                 type="text"
-                id="specialty"
-                name="specialty"
-                value={formData.specialty}
+                id="speciality"
+                name="speciality"
+                value={formData.speciality}
                 onChange={handleInputChange}
-                placeholder={t('organizationSpecialty')}
+                placeholder={t('organizationSpeciality')}
                 disabled={isLocationSelectionMode}
               />
             </div>

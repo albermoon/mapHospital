@@ -164,7 +164,7 @@ function App() {
 
         <div className="map-container">
           <MapComponent
-            organizations={organizations} // markers only appear once both sheets loaded
+            organizations={organizations}
             onAddOrganization={handleAddOrganization}
             loading={anySheetLoading}
             error={error}

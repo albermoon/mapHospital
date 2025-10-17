@@ -15,7 +15,7 @@
   "email": "E-mail",
   "country": "Pays",
   "city": "Ville",
-  "specialty": "Spécialité",
+  "speciality": "Spécialité",
   "name": "Nom",
   "type": "Type",
   "searchPlaceholder": "Rechercher une adresse...",

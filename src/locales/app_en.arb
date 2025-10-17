@@ -15,7 +15,7 @@
   "email": "Email",
   "country": "Country",
   "city": "City",
-  "specialty": "Specialty",
+  "speciality": "Speciality",
   "name": "Name",
   "type": "Type",
   "searchPlaceholder": "Search for address...",
