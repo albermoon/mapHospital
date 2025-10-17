@@ -136,7 +136,11 @@ export default async function handler(req, res) {
             cachedSheets[sheet] = sheetData;
             cacheTimestamps[sheet] = now;
 
-            return res.json({ status: 'success', data: sheetData, cached: false });
+            const activeSheetData = sheetData.filter(item =>
+                String(item.Status).trim() === '1'
+            );
+
+            return res.json({ status: 'success', data: activeSheetData, cached: false });
         }
 
         // ---------------------------

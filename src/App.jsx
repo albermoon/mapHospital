@@ -51,10 +51,10 @@ function App() {
           country: item.Country || '',
           city: item.City || '',
           speciality: item.Speciality || '',
-          status: item.Status || 0
+          status: item.Status || 1
         }
       })
-      .filter(org => org !== null && org.status === 1)
+      .filter(org => org !== null)
   }
 
   useEffect(() => {
