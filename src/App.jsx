@@ -51,7 +51,7 @@ function App() {
           country: item.Country || '',
           city: item.City || '',
           speciality: item.Speciality || '',
-          status: item.Status || 1
+          status: item.Status || 0
         }
       })
       .filter(org => org !== null)

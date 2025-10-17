@@ -61,9 +61,12 @@ export default async function handler(req, res) {
             const sheet = req.query.sheet || 'all';
             const now = Date.now();
 
-            // Serve cached sheet if still valid
             if (cachedSheets[sheet] && (now - cacheTimestamps[sheet] < CACHE_TTL)) {
-                return res.json({ status: 'success', data: cachedSheets[sheet], cached: true });
+                const activeCached = cachedSheets[sheet].filter(
+                    (item) => String(item.Status).trim() === '1'
+                );
+                console.log(`🗃️ Serving ${sheet} from cache (${activeCached.length} active rows)`);
+                return res.json({ status: 'success', data: activeCached, cached: true });
             }
 
             console.log(`🌐 Fetching data for sheet: ${sheet}`);
@@ -77,7 +80,9 @@ export default async function handler(req, res) {
             console.log('🧾 Raw response (GET):', text);
 
             let data;
-            try { data = JSON.parse(text); } catch {
+            try {
+                data = JSON.parse(text);
+            } catch {
                 console.error('❌ Invalid JSON from Google Script (GET)');
                 throw new Error('Invalid response from Google Script');
             }
@@ -85,9 +90,8 @@ export default async function handler(req, res) {
             const duration = performance.now() - start;
             console.log(`⏱️ Google Script responded in ${duration.toFixed(2)}ms`);
 
-            // Normalize sheet data
             const processData = (items, defaultType) =>
-                (items || []).map(item => ({
+                (items || []).map((item) => ({
                     ID: item.ID || '',
                     Name: item.Name || '',
                     Type: item.Type || defaultType,
@@ -106,10 +110,8 @@ export default async function handler(req, res) {
             let sheetData = [];
 
             if (Array.isArray(data.data)) {
-                // All sheets combined
                 sheetData = data.data;
             } else {
-                // Individual sheets returned
                 switch (sheet.toLowerCase()) {
                     case 'hospitales':
                         sheetData = processData(data.hospitales, 'Hospital');
@@ -132,12 +134,11 @@ export default async function handler(req, res) {
                 }
             }
 
-            // Update cache for this sheet
             cachedSheets[sheet] = sheetData;
             cacheTimestamps[sheet] = now;
 
-            const activeSheetData = sheetData.filter(item =>
-                String(item.Status).trim() === '1'
+            const activeSheetData = sheetData.filter(
+                (item) => String(item.Status).trim() === '1'
             );
 
             return res.json({ status: 'success', data: activeSheetData, cached: false });
@@ -151,7 +152,6 @@ export default async function handler(req, res) {
             status: 'error',
             message: `Method ${req.method} Not Allowed`,
         });
-
     } catch (err) {
         console.error('❌ Google Sheets API error:', err);
         res.status(500).json({
