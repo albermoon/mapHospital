@@ -5,11 +5,11 @@ if (typeof fetch === 'undefined') {
 }
 
 // ----------------------
-// In-memory cache
+// In-memory per-sheet cache
 // ----------------------
-let cachedData = null;
-let cacheTimestamp = 0;
-const CACHE_TTL = 30 * 1000; // 30 seconds
+const cachedSheets = {};       // key = sheet name, value = data
+const cacheTimestamps = {};    // key = sheet name, value = timestamp
+const CACHE_TTL = 30 * 1000;   // 30 seconds
 
 export default async function handler(req, res) {
     const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
@@ -45,28 +45,30 @@ export default async function handler(req, res) {
                 throw new Error('Invalid response from Google Script');
             }
 
-            // Invalidate cache on POST
-            cachedData = null;
-            cacheTimestamp = 0;
+            // Invalidate **all cached sheets** on POST
+            for (const key in cachedSheets) {
+                delete cachedSheets[key];
+                delete cacheTimestamps[key];
+            }
 
             return res.json(data);
         }
 
         // ---------------------------
-        // GET — Fetch data with caching
+        // GET — Fetch data with per-sheet caching
         // ---------------------------
         if (req.method === 'GET') {
+            const sheet = req.query.sheet || 'all';
             const now = Date.now();
 
-            // Serve cached data if still valid
-            if (cachedData && (now - cacheTimestamp) < CACHE_TTL) {
-                return res.json({ status: 'success', data: cachedData, cached: true });
+            // Serve cached sheet if still valid
+            if (cachedSheets[sheet] && (now - cacheTimestamps[sheet] < CACHE_TTL)) {
+                return res.json({ status: 'success', data: cachedSheets[sheet], cached: true });
             }
 
-            const sheet = req.query.sheet || 'all';
             console.log(`🌐 Fetching data for sheet: ${sheet}`);
-
             const start = performance.now();
+
             const url = new URL(GOOGLE_SCRIPT_URL);
             url.searchParams.set('sheet', sheet);
 
@@ -83,7 +85,7 @@ export default async function handler(req, res) {
             const duration = performance.now() - start;
             console.log(`⏱️ Google Script responded in ${duration.toFixed(2)}ms`);
 
-            // Normalize combined data structure
+            // Normalize sheet data
             const processData = (items, defaultType) =>
                 (items || []).map(item => ({
                     ID: item.ID || '',
@@ -101,24 +103,45 @@ export default async function handler(req, res) {
                     Status: item.Status || '',
                 }));
 
-            let mergedData = [];
+            let sheetData = [];
+
             if (Array.isArray(data.data)) {
-                mergedData = data.data;
+                // All sheets combined
+                sheetData = data.data;
             } else {
-                mergedData = [
-                    ...processData(data.hospitales, 'Hospital'),
-                    ...processData(data.asociaciones, 'Association'),
-                    ...processData(data.organizaciones, 'Organization'),
-                ];
+                // Individual sheets returned
+                switch (sheet.toLowerCase()) {
+                    case 'hospitales':
+                        sheetData = processData(data.hospitales, 'Hospital');
+                        break;
+                    case 'asociaciones':
+                        sheetData = processData(data.asociaciones, 'Association');
+                        break;
+                    case 'organizaciones':
+                        sheetData = processData(data.organizaciones, 'Organization');
+                        break;
+                    case 'all':
+                        sheetData = [
+                            ...processData(data.hospitales, 'Hospital'),
+                            ...processData(data.asociaciones, 'Association'),
+                            ...processData(data.organizaciones, 'Organization'),
+                        ];
+                        break;
+                    default:
+                        sheetData = [];
+                }
             }
 
-            // Update cache
-            cachedData = mergedData;
-            cacheTimestamp = now;
+            // Update cache for this sheet
+            cachedSheets[sheet] = sheetData;
+            cacheTimestamps[sheet] = now;
 
-            return res.json({ status: 'success', data: mergedData, cached: false });
+            return res.json({ status: 'success', data: sheetData, cached: false });
         }
 
+        // ---------------------------
+        // Method not allowed
+        // ---------------------------
         res.setHeader('Allow', ['GET', 'POST']);
         res.status(405).json({
             status: 'error',

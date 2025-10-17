@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter counts now update correctly without infinite loops
 - Speciality not showing up nor posting
 - Fixed filter not hiding both Hospitales and Asociaciones when prompted
+- Fixed an interaction bewtween the fetch and the cache, sometimes it fetch the data of one, then took it from the cache, doubling the result
 
 ### Changed
 - App now defaults to `Asociaciones` if `Hospitales` sheet is empty
