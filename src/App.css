@@ -2,6 +2,9 @@
 .App {
   text-align: center;
   min-height: 100vh;
+  /* fallback */
+  min-height: 100dvh;
+  /* dynamic viewport height */
   background-color: #f5f5f5;
   display: flex;
   flex-direction: column;
@@ -11,7 +14,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: 15px max(20px, env(safe-area-inset-right, 20px)) 15px max(20px, env(safe-area-inset-left, 20px));
+  padding-top: max(15px, env(safe-area-inset-top, 15px));
   background-color: #282c34;
   color: white;
   z-index: 1000;
@@ -27,13 +31,18 @@ main {
   flex: 1;
   padding: 0;
   position: relative;
+  padding:
+    env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
 }
 
 /* MAP */
 .map-container {
   position: absolute;
   inset: 0;
-  /* top:0; right:0; bottom:0; left:0; */
+  top: 0;
+  left: env(safe-area-inset-left, 0px);
+  right: env(safe-area-inset-right, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .map-viewport {
@@ -86,8 +95,8 @@ main {
 /* SEARCH */
 .search-control {
   position: absolute;
-  top: 30px;
-  right: 20px;
+  top: max(30px, calc(30px + env(safe-area-inset-top, 0px)));
+  right: max(20px, env(safe-area-inset-right, 20px));
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -153,7 +162,7 @@ main {
 .search-results {
   position: fixed;
   top: 160px;
-  right: 40px;
+  right: max(40px, env(safe-area-inset-right, 40px));
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -210,8 +219,8 @@ main {
 /* FILTER */
 .filter-control {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: max(20px, calc(20px + env(safe-area-inset-top, 0px)));
+  left: max(20px, env(safe-area-inset-left, 20px));
   z-index: 1000;
 }
 
@@ -303,26 +312,22 @@ main {
   color: #007bff;
 }
 
-/* FLOATING ACTION BUTTONS - shared */
+/* FLOATING ACTION BUTTONS */
 .add-control,
 .geolocation-control {
   position: absolute;
-  right: 20px;
+  right: max(20px, env(safe-area-inset-right, 20px));
   z-index: 1000;
 }
 
-/* safe-area fallback then env-based (kept for compatibility) */
 .geolocation-control {
-  bottom: 90px;
-  bottom: calc(90px + env(safe-area-inset-bottom));
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
 .add-control {
-  bottom: 20px;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 }
 
-/* per-button tweaks */
 .add-btn {
   background: #fff;
   color: #2f3133;
@@ -405,7 +410,6 @@ main {
   text-decoration: underline;
 }
 
-/* Reduced-force overrides for address link — prefer specificity, avoid !important */
 .organization-popup .address-link {
   color: inherit;
   text-decoration: none;
@@ -437,7 +441,7 @@ main {
 
 .location-selection-banner {
   position: absolute;
-  top: 20px;
+  top: max(20px, calc(20px + env(safe-area-inset-top, 0px)));
   left: 50%;
   transform: translateX(-50%);
   background: #fff;
@@ -484,7 +488,7 @@ main {
   transform: translateY(-1px);
 }
 
-/* ANIMATIONS (kept only what's used) */
+/* ANIMATIONS */
 @keyframes expandPanel {
   from {
     opacity: 0;
@@ -518,7 +522,8 @@ main {
   .App-header {
     flex-wrap: wrap;
     justify-content: space-between;
-    padding: 10px;
+    padding: 10px max(10px, env(safe-area-inset-right, 10px)) 10px max(10px, env(safe-area-inset-left, 10px));
+    padding-top: max(10px, env(safe-area-inset-top, 10px));
   }
 
   .App-header h1 {
@@ -537,15 +542,12 @@ main {
   }
 
   .map-container {
-    height: 100vh;
-    height: calc(100vh - env(safe-area-inset-bottom));
+    height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
   }
 
   .search-control {
-    top: 25px;
-    top: max(25px, env(safe-area-inset-top));
-    right: 15px;
-    right: max(15px, env(safe-area-inset-right));
+    top: max(25px, calc(25px + env(safe-area-inset-top, 0px)));
+    right: max(15px, env(safe-area-inset-right, 15px));
   }
 
   .search-container {
@@ -587,10 +589,8 @@ main {
   }
 
   .filter-control {
-    top: 15px;
-    top: max(15px, env(safe-area-inset-top));
-    left: 15px;
-    left: max(15px, env(safe-area-inset-left));
+    top: max(15px, calc(15px + env(safe-area-inset-top, 0px)));
+    left: max(15px, env(safe-area-inset-left, 15px));
   }
 
   .filter-panel {
@@ -633,18 +633,16 @@ main {
 
   .geolocation-control,
   .add-control {
-    right: 15px;
-    right: max(15px, env(safe-area-inset-right));
+    right: max(15px, env(safe-area-inset-right, 15px));
   }
 
   .geolocation-control {
-    bottom: 200px;
-    bottom: max(200px, calc(85px + env(safe-area-inset-bottom) + 25px));
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 10px;
   }
 
   .add-control {
-    bottom: 140px;
-    bottom: max(140px, calc(25px + env(safe-area-inset-bottom) + 25px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
   .geolocation-btn,
@@ -654,7 +652,7 @@ main {
   }
 
   .location-selection-banner {
-    top: 10px;
+    top: max(10px, calc(10px + env(safe-area-inset-top, 0px)));
     left: 10px;
     right: 10px;
     transform: none;
@@ -685,6 +683,67 @@ main {
 
   .add-icon {
     font-size: 24px;
+  }
+}
+
+/* Safe area fallbacks for older browsers */
+@supports not (padding: env(safe-area-inset-top)) {
+  .App-header {
+    padding: 15px 20px;
+  }
+
+  .map-container {
+    bottom: 0px;
+  }
+
+  .search-control {
+    top: 30px;
+    right: 20px;
+  }
+
+  .filter-control {
+    top: 20px;
+    left: 20px;
+  }
+
+  .geolocation-control {
+    bottom: 80px;
+    right: 20px;
+  }
+
+  .add-control {
+    bottom: 20px;
+    right: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .App-header {
+      padding: 10px;
+    }
+
+    .map-container {
+      height: calc(100vh - 60px);
+    }
+
+    .search-control {
+      top: 25px;
+      right: 15px;
+    }
+
+    .filter-control {
+      top: 15px;
+      left: 15px;
+    }
+
+    .geolocation-control {
+      bottom: 70px;
+      right: 15px;
+    }
+
+    .add-control {
+      bottom: 20px;
+      right: 15px;
+    }
   }
 }
 

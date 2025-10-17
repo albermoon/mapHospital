@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance logging added for API calls and marker rendering
 - Modified the logic behind the ID to increment from previous ID instead of creating new ones
 - Status now defaults to 0, and only shows entries with status == 1
+- Changed the hard coded mobile view for Geolocation button and Add button to a safe zone
 
 ### Removed
 - N/A
