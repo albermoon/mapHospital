@@ -20,6 +20,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const mapInstanceRef = useRef(null)
   const markerRef = useRef(null)
   const markersRef = useRef([])
+  const tempLocationMarkerRef = useRef(null)
 
   const [organizations, setOrganizations] = useState([])
   const [filteredOrganizations, setFilteredOrganizations] = useState([])
@@ -269,19 +270,39 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       onAdd: function () {
         const container = L.DomUtil.create('div', 'geolocation-control')
         container.innerHTML = `<button class="geolocation-btn" title="${t('findMyLocation')}"><span class="geolocation-icon">📍</span></button>`
-        container.querySelector('.geolocation-btn').addEventListener('click', () => {
+
+        const button = container.querySelector('.geolocation-btn')
+        button.addEventListener('click', () => {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-              (pos) => mapInstance.setView([pos.coords.latitude, pos.coords.longitude], 13),
+              (pos) => {
+                const { latitude, longitude } = pos.coords
+                mapInstance.setView([latitude, longitude], 13)
+
+                if (tempLocationMarkerRef.current) {
+                  mapInstance.removeLayer(tempLocationMarkerRef.current)
+                }
+
+                // Add new temporary marker using default Leaflet icon
+                tempLocationMarkerRef.current = L.marker([latitude, longitude], {
+                  icon: new L.Icon.Default(),
+                }).addTo(mapInstance)
+
+              },
               (err) => { console.error(err); alert(t('geolocationError')) }
             )
-          } else alert(t('geolocationNotSupported'))
+          } else {
+            alert(t('geolocationNotSupported'))
+          }
         })
+
         return container
       }
     })
+
     mapInstance.addControl(new GeolocationControl())
   }
+
 
   return (
     <div className="map-container">

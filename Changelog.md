@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 15-10-2025
+## [1.1.1] - 16-10-2025
 
 ### Added
 - Google Sheets API handler (`/api/google-sheets.js`) for GET/POST requests
@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Map filter panel with hospital/association toggles
 - Search control for organizations
 - Google Sheets connection status component
+- Parallel fetching to reduce load-time
+- Cache system to reduce load-time
+- Temporary marker when using the geolocation button
 
 ### Fixed
 - Prevented infinite reload when the `Hospitales` sheet is empty
@@ -22,11 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Correctly memoized popup content to avoid unnecessary re-renders
 - Fixed Leaflet icon path issues
 - Filter counts now update correctly without infinite loops
+- Speciality not showing up nor posting
+- Fixed filter not hiding both Hospitales and Asociaciones when prompted
 
 ### Changed
 - App now defaults to `Asociaciones` if `Hospitales` sheet is empty
 - `MapComponent` now preserves markers when switching sheets
 - Performance logging added for API calls and marker rendering
+- Modified the logic behind the ID to increment from previous ID instead of creating new ones
 
 ### Removed
 - N/A
