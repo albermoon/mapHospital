@@ -4,6 +4,13 @@ if (typeof fetch === 'undefined') {
     global.fetch = fetch;
 }
 
+// ----------------------
+// In-memory cache
+// ----------------------
+let cachedData = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
 export default async function handler(req, res) {
     const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
 
@@ -38,18 +45,28 @@ export default async function handler(req, res) {
                 throw new Error('Invalid response from Google Script');
             }
 
+            // Invalidate cache on POST
+            cachedData = null;
+            cacheTimestamp = 0;
+
             return res.json(data);
         }
 
         // ---------------------------
-        // GET — Fetch data
+        // GET — Fetch data with caching
         // ---------------------------
         if (req.method === 'GET') {
-            const sheet = req.query.sheet || 'Hospitales';
+            const now = Date.now();
+
+            // Serve cached data if still valid
+            if (cachedData && (now - cacheTimestamp) < CACHE_TTL) {
+                return res.json({ status: 'success', data: cachedData, cached: true });
+            }
+
+            const sheet = req.query.sheet || 'all';
             console.log(`🌐 Fetching data for sheet: ${sheet}`);
 
             const start = performance.now();
-
             const url = new URL(GOOGLE_SCRIPT_URL);
             url.searchParams.set('sheet', sheet);
 
@@ -58,9 +75,7 @@ export default async function handler(req, res) {
             console.log('🧾 Raw response (GET):', text);
 
             let data;
-            try {
-                data = JSON.parse(text);
-            } catch {
+            try { data = JSON.parse(text); } catch {
                 console.error('❌ Invalid JSON from Google Script (GET)');
                 throw new Error('Invalid response from Google Script');
             }
@@ -70,7 +85,7 @@ export default async function handler(req, res) {
 
             // Normalize combined data structure
             const processData = (items, defaultType) =>
-                (items || []).map((item) => ({
+                (items || []).map(item => ({
                     ID: item.ID || '',
                     Name: item.Name || '',
                     Type: item.Type || defaultType,
@@ -86,10 +101,9 @@ export default async function handler(req, res) {
                     Status: item.Status || '',
                 }));
 
-            // Support both direct-sheet and merged-sheet structures
             let mergedData = [];
             if (Array.isArray(data.data)) {
-                mergedData = data.data; // Already merged by Apps Script
+                mergedData = data.data;
             } else {
                 mergedData = [
                     ...processData(data.hospitales, 'Hospital'),
@@ -98,10 +112,11 @@ export default async function handler(req, res) {
                 ];
             }
 
-            return res.json({
-                status: 'success',
-                data: mergedData,
-            });
+            // Update cache
+            cachedData = mergedData;
+            cacheTimestamp = now;
+
+            return res.json({ status: 'success', data: mergedData, cached: false });
         }
 
         res.setHeader('Allow', ['GET', 'POST']);

@@ -15,7 +15,6 @@ function App() {
   const [sheetData, setSheetData] = useState({})
   const [currentSheet, setCurrentSheet] = useState(SHEET_NAMES.HOSPITALES)
 
-  // Track loading per sheet
   const [loadingSheets, setLoadingSheets] = useState({
     [SHEET_NAMES.HOSPITALES]: true,
     [SHEET_NAMES.ASOCIACIONES]: true
@@ -58,23 +57,30 @@ function App() {
       .filter(org => org !== null)
   }
 
-  // Load sheets sequentially
   useEffect(() => {
     const loadSheets = async () => {
       try {
-        const hospitalesData = await fetchData(SHEET_NAMES.HOSPITALES)
-        setSheetData(prev => ({
-          ...prev,
-          [SHEET_NAMES.HOSPITALES]: transformSheet(hospitalesData)
-        }))
-        setLoadingSheets(prev => ({ ...prev, [SHEET_NAMES.HOSPITALES]: false }))
+        const [hospitalesData, asociacionesData] = await Promise.all([
+          fetchData(SHEET_NAMES.HOSPITALES),
+          fetchData(SHEET_NAMES.ASOCIACIONES)
+        ])
 
-        const asociacionesData = await fetchData(SHEET_NAMES.ASOCIACIONES)
+        const [transformedHosp, transformedAssoc] = await Promise.all([
+          Promise.resolve(transformSheet(hospitalesData)),
+          Promise.resolve(transformSheet(asociacionesData))
+        ])
+
         setSheetData(prev => ({
           ...prev,
-          [SHEET_NAMES.ASOCIACIONES]: transformSheet(asociacionesData)
+          [SHEET_NAMES.HOSPITALES]: transformedHosp,
+          [SHEET_NAMES.ASOCIACIONES]: transformedAssoc
         }))
-        setLoadingSheets(prev => ({ ...prev, [SHEET_NAMES.ASOCIACIONES]: false }))
+
+        setLoadingSheets({
+          [SHEET_NAMES.HOSPITALES]: false,
+          [SHEET_NAMES.ASOCIACIONES]: false
+        })
+
       } catch (err) {
         console.error('Error fetching sheets', err)
       }
@@ -83,7 +89,6 @@ function App() {
     loadSheets()
   }, [fetchData])
 
-  // Only merge sheets once BOTH are loaded
   useEffect(() => {
     const allLoaded = Object.values(loadingSheets).every(v => v === false)
     if (allLoaded) {
