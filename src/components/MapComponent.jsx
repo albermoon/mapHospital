@@ -3,7 +3,6 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
-import { filterOrganizationsByType } from '../utils/filter'
 import SearchControl from './SearchControl'
 import { useTranslation } from '../utils/i18n'
 
@@ -21,7 +20,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const mapInstanceRef = useRef(null)
   const markerRef = useRef(null)
   const markersRef = useRef([])
-  const filterControlRef = useRef(null)
 
   const [organizations, setOrganizations] = useState([])
   const [filteredOrganizations, setFilteredOrganizations] = useState([])
@@ -47,47 +45,22 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
   // Filter organizations based on toggle states
   useEffect(() => {
-    const filtered = filterOrganizationsByType(organizations, showHospitals, showAssociations)
+    const filtered = organizations.filter(org => {
+      if (!showHospitals && !showAssociations) return false
+      if (org.type === 'hospital' && showHospitals) return true
+      if (org.type === 'association' && showAssociations) return true
+      return false
+    })
     setFilteredOrganizations(filtered)
   }, [organizations, showHospitals, showAssociations])
 
-  // Memoize filter counts to prevent unnecessary recalculations
+
+  // Memoize filter counts
   const filterCounts = useMemo(() => {
     const hospitalCount = organizations.filter(org => org.type === 'hospital').length;
     const associationCount = organizations.filter(org => org.type === 'association').length;
     return { hospitalCount, associationCount };
   }, [organizations]);
-
-  // Update filter counts when data changes (removed infinite loop)
-  useEffect(() => {
-    if (filterControlRef.current) {
-      updateFilterCounts();
-    }
-  }, [filterCounts, t]); // Only depend on memoized counts, not filteredOrganizations
-
-  // Function to update filter counts
-  const updateFilterCounts = useCallback(() => {
-    // Use memoized counts instead of recalculating
-    const { hospitalCount, associationCount } = filterCounts;
-
-    // Update the DOM elements directly
-    const hospitalFilter = document.getElementById('hospital-filter');
-    const associationFilter = document.getElementById('association-filter');
-
-    if (hospitalFilter) {
-      const textElement = hospitalFilter.parentElement.querySelector('.filter-text');
-      if (textElement) {
-        textElement.textContent = `${t('hospitals')} (${hospitalCount})`;
-      }
-    }
-
-    if (associationFilter) {
-      const textElement = associationFilter.parentElement.querySelector('.filter-text');
-      if (textElement) {
-        textElement.textContent = `${t('associations')} (${associationCount})`;
-      }
-    }
-  }, [filterCounts, t]);
 
   // Clear existing markers
   const clearMarkers = useCallback(() => {
@@ -98,7 +71,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     markersRef.current = []
   }, [])
 
-  // Memoize popup content generation to avoid recreating on every render
+  // Memoize popup content
   const generatePopupContent = useCallback((org) => {
     const typeColor = org.type === 'hospital' ? '#dc3545' : '#007bff'
     const typeLabel = org.type === 'hospital' ? t('hospital') : t('association')
@@ -145,26 +118,17 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return
-    if (!filteredOrganizations || filteredOrganizations.length === 0) {
-      return
-    }
-
-    const renderStartTime = performance.now()
-    console.log(`🎨 Starting marker rendering for ${filteredOrganizations.length} organizations`)
 
     clearMarkers()
+
+    if (!filteredOrganizations || filteredOrganizations.length === 0) return
 
     const isMobile = window.innerWidth <= 768
     const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon
     const associationIconToUse = isMobile ? associationIconMobile : associationIcon
 
-    const markersToAdd = []
-
-    filteredOrganizations.forEach((org, index) => {
-      if (!org.coordinates || org.coordinates.length !== 2) {
-        console.warn('Invalid coordinates for org:', org)
-        return
-      }
+    filteredOrganizations.forEach((org) => {
+      if (!org.coordinates || org.coordinates.length !== 2) return
 
       const icon = org.type === 'hospital' ? hospitalIconToUse : associationIconToUse
       const popupContent = generatePopupContent(org)
@@ -172,45 +136,27 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       const marker = L.marker(org.coordinates, { icon })
         .bindPopup(popupContent, { maxWidth: 300 })
 
-      markersToAdd.push(marker)
-
-      if (filteredOrganizations.length > 100 && index % 50 === 0) {
-        console.log(`🎨 Prepared ${index + 1}/${filteredOrganizations.length} markers`)
-      }
-    })
-
-    // Add all markers to the map at once
-    markersToAdd.forEach(marker => {
       marker.addTo(mapInstanceRef.current)
       markersRef.current.push(marker)
     })
-
-    // End timing the marker rendering process
-    const renderEndTime = performance.now()
-    const renderDuration = renderEndTime - renderStartTime
-    console.log(`⏱️ Marker rendering completed in ${renderDuration.toFixed(2)}ms`)
-    console.log(`🎨 Rendered ${markersRef.current.length} markers on the map`)
   }, [filteredOrganizations, clearMarkers, generatePopupContent])
-
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       updateMarkers()
     }, 100)
-
     return () => clearTimeout(timeoutId)
   }, [updateMarkers])
 
+  // Location selection
   useEffect(() => {
     if (!map || !isSelectingLocation) return
 
     const handleMapClick = (e) => {
-      if (isSelectingLocation && locationSelectionCallback) {
+      if (locationSelectionCallback) {
         const { lat, lng } = e.latlng
 
-        if (markerRef.current) {
-          map.removeLayer(markerRef.current)
-        }
+        if (markerRef.current) map.removeLayer(markerRef.current)
 
         markerRef.current = L.marker([lat, lng], {
           icon: L.divIcon({
@@ -221,7 +167,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           })
         }).addTo(map)
 
-        // Show coordinates in a popup
         const popup = markerRef.current.bindPopup(`
           <div style="text-align:center;padding:10px;">
             <strong>✅ ${t('locationSelected')}</strong><br>
@@ -230,11 +175,8 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
           </div>
         `).openPopup()
 
-        // Auto-close the popup after 1.5 seconds and send coordinates
         setTimeout(() => {
-          if (popup && popup.closePopup) {
-            popup.closePopup()
-          }
+          if (popup && popup.closePopup) popup.closePopup()
           locationSelectionCallback([lat, lng])
           setIsSelectingLocation(false)
           setLocationSelectionCallback(null)
@@ -244,23 +186,17 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     }
 
     map.on('click', handleMapClick)
-
     return () => {
       map.off('click', handleMapClick)
-      if (markerRef.current) {
-        map.removeLayer(markerRef.current)
-      }
+      if (markerRef.current) map.removeLayer(markerRef.current)
     }
   }, [map, isSelectingLocation, locationSelectionCallback, t])
 
-  // Handle location selection
   const handleLocationSelection = useCallback((callback) => {
-    if (callback === null) {
+    if (!callback) {
       setIsSelectingLocation(false)
       setLocationSelectionCallback(null)
-      if (markerRef.current && mapInstanceRef.current) {
-        mapInstanceRef.current.removeLayer(markerRef.current)
-      }
+      if (markerRef.current && mapInstanceRef.current) mapInstanceRef.current.removeLayer(markerRef.current)
     } else {
       setIsFormOpen(false)
       setIsSelectingLocation(true)
@@ -268,23 +204,17 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     }
   }, [])
 
-  // Handle adding a new organization
   const handleAddOrganization = (newOrg) => {
-    if (onAddOrganization) {
-      onAddOrganization(newOrg)
-    } else {
+    if (onAddOrganization) onAddOrganization(newOrg)
+    else {
       setOrganizations(prev => [...prev, newOrg])
       setFilteredOrganizations(prev => [...prev, newOrg])
     }
   }
 
-  // Handle search organization selection
   const handleSelectOrganization = useCallback((organization) => {
     if (mapInstanceRef.current && organization.coordinates) {
-      // Zoom to the selected organization
       mapInstanceRef.current.setView(organization.coordinates, 15)
-
-      // Find and open the popup for this organization
       markersRef.current.forEach(marker => {
         const markerLatLng = marker.getLatLng()
         if (markerLatLng.lat === organization.coordinates[0] &&
@@ -298,22 +228,18 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   // Initialize map
   useEffect(() => {
     if (mapRef.current && !mapInstanceRef.current) {
-      const mapInstance = L.map(mapRef.current, { zoomControl: false })
-        .setView([50.8503, 4.3517], 5)
+      const mapInstance = L.map(mapRef.current, { zoomControl: false }).setView([50.8503, 4.3517], 5)
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(mapInstance)
 
-      // Add custom controls
-      addFilterControl(mapInstance)
       addAddControl(mapInstance)
       addGeolocationControl(mapInstance)
 
       mapInstanceRef.current = mapInstance
       setMap(mapInstance)
     }
-
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
@@ -322,145 +248,74 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     }
   }, [])
 
-  // Filter control
-  const addFilterControl = (mapInstance) => {
-    const FilterControl = L.Control.extend({
-      options: { position: 'topleft' },
-      onAdd: function () {
-        const container = L.DomUtil.create('div', 'filter-control')
-
-        // Use memoized counts instead of recalculating
-        const { hospitalCount, associationCount } = filterCounts
-
-        container.innerHTML = `
-          <div class="filter-panel" id="filter-panel">
-            <button class="filter-toggle" id="filter-toggle">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 14.414V19a1 1 0 01-.553.894l-2 1A1 1 0 019 20v-5.586L1.293 6.707A1 1 0 011 6V4z" fill="currentColor"/>
-              </svg>
-            </button>
-            <div class="filter-item">
-              <label class="filter-checkbox">
-                <input type="checkbox" id="hospital-filter" ${showHospitals ? 'checked' : ''}>
-                <span class="filter-icon" style="color: #dc3545;">⚕</span>
-                <span class="filter-text">${t('hospitals')} (${hospitalCount})</span>
-              </label>
-            </div>
-            <div class="filter-item">
-              <label class="filter-checkbox">
-                <input type="checkbox" id="association-filter" ${showAssociations ? 'checked' : ''}>
-                <span class="filter-icon" style="color: #007bff;">👥</span>
-                <span class="filter-text">${t('associations')} (${associationCount})</span>
-              </label>
-            </div>
-          </div>
-        `
-
-        const hospitalFilter = container.querySelector('#hospital-filter')
-        const associationFilter = container.querySelector('#association-filter')
-        const filterPanel = container.querySelector('#filter-panel')
-        const filterToggle = container.querySelector('#filter-toggle')
-
-        // Handle mobile toggle
-        filterToggle.addEventListener('click', () => {
-          if (filterPanel.classList.contains('expanded')) {
-            filterPanel.classList.remove('expanded');
-          } else {
-            filterPanel.classList.add('expanded');
-          }
-        });
-
-        hospitalFilter.addEventListener('change', (e) => {
-          setShowHospitals(e.target.checked)
-        })
-
-        associationFilter.addEventListener('change', (e) => {
-          setShowAssociations(e.target.checked)
-        })
-
-        filterControlRef.current = container;
-        return container
-      }
-    })
-
-    mapInstance.addControl(new FilterControl())
-  }
-
-  // Add control
+  // Add control functions
   const addAddControl = (mapInstance) => {
     const AddControl = L.Control.extend({
       options: { position: 'bottomright' },
       onAdd: function () {
         const container = L.DomUtil.create('div', 'add-control')
-
-        container.innerHTML = `
-          <button class="add-btn" title="${t('addOrganization')}">
-            <span class="add-icon">+</span>
-          </button>
-        `
-
+        container.innerHTML = `<button class="add-btn" title="${t('addOrganization')}"><span class="add-icon">+</span></button>`
         const addButton = container.querySelector('.add-btn')
-        addButton.addEventListener('click', () => {
-          setIsFormOpen(true)
-        })
-
+        addButton.addEventListener('click', () => setIsFormOpen(true))
         return container
       }
     })
-
     mapInstance.addControl(new AddControl())
   }
 
-  // Geolocation control
   const addGeolocationControl = (mapInstance) => {
     const GeolocationControl = L.Control.extend({
       options: { position: 'bottomright' },
       onAdd: function () {
         const container = L.DomUtil.create('div', 'geolocation-control')
-
-        container.innerHTML = `
-          <button class="geolocation-btn" title="${t('findMyLocation')}">
-            <span class="geolocation-icon">📍</span>
-          </button>
-        `
-
-        const geoButton = container.querySelector('.geolocation-btn')
-        geoButton.addEventListener('click', () => {
+        container.innerHTML = `<button class="geolocation-btn" title="${t('findMyLocation')}"><span class="geolocation-icon">📍</span></button>`
+        container.querySelector('.geolocation-btn').addEventListener('click', () => {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const { latitude, longitude } = position.coords
-                mapInstance.setView([latitude, longitude], 13)
-              },
-              (error) => {
-                console.error('Geolocation error:', error)
-                alert(t('geolocationError'))
-              }
+              (pos) => mapInstance.setView([pos.coords.latitude, pos.coords.longitude], 13),
+              (err) => { console.error(err); alert(t('geolocationError')) }
             )
-          } else {
-            alert(t('geolocationNotSupported'))
-          }
+          } else alert(t('geolocationNotSupported'))
         })
-
         return container
       }
     })
-
     mapInstance.addControl(new GeolocationControl())
   }
 
   return (
     <div className="map-container">
-      <div
-        ref={mapRef}
-        className={`map-viewport ${isSelectingLocation ? 'location-selection-mode' : ''}`}
-      />
+      <div ref={mapRef} className={`map-viewport ${isSelectingLocation ? 'location-selection-mode' : ''}`} />
+
+      {/* React-controlled Filter Panel */}
+      <div className="filter-control">
+        <div className={`filter-panel ${filterPanelExpanded ? 'expanded' : ''}`}>
+          <button className="filter-toggle" onClick={() => setFilterPanelExpanded(prev => !prev)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 14.414V19a1 1 0 01-.553.894l-2 1A1 1 0 019 20v-5.586L1.293 6.707A1 1 0 011 6V4z" fill="currentColor" />
+            </svg>
+          </button>
+
+          <div className="filter-item">
+            <label className="filter-checkbox">
+              <input type="checkbox" checked={showHospitals} onChange={e => setShowHospitals(e.target.checked)} />
+              <span className="filter-icon" style={{ color: '#dc3545' }}>⚕</span>
+              <span className="filter-text">{t('hospitals')} ({filterCounts.hospitalCount})</span>
+            </label>
+          </div>
+
+          <div className="filter-item">
+            <label className="filter-checkbox">
+              <input type="checkbox" checked={showAssociations} onChange={e => setShowAssociations(e.target.checked)} />
+              <span className="filter-icon" style={{ color: '#007bff' }}>👥</span>
+              <span className="filter-text">{t('associations')} ({filterCounts.associationCount})</span>
+            </label>
+          </div>
+        </div>
+      </div>
 
       {/* Search Control */}
-      <SearchControl
-        organizations={organizations}
-        onSelectOrganization={handleSelectOrganization}
-      />
+      <SearchControl organizations={organizations} onSelectOrganization={handleSelectOrganization} />
 
       {/* Location Selection Overlay */}
       {isSelectingLocation && (
@@ -471,11 +326,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
               <p>{t('locationSelectionDescription')}</p>
               <p><small>{t('clickMapToSelect')}</small></p>
             </div>
-            <button
-              type="button"
-              className="location-cancel-btn"
-              onClick={() => handleLocationSelection(null)}
-            >
+            <button type="button" className="location-cancel-btn" onClick={() => handleLocationSelection(null)}>
               ← {t('cancel')} {t('selectLocation')}
             </button>
           </div>
