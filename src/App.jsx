@@ -99,7 +99,6 @@ function App() {
 
   const handleAddOrganization = async (organization) => {
     setLocalOrganizations(prev => [...prev, organization])
-    setOrganizations(prev => [...prev, organization])
 
     try {
       const res = await saveData({
@@ -114,11 +113,11 @@ function App() {
         Country: organization.country,
         City: organization.city,
         Speciality: organization.speciality,
-        Status: 0
+        Status: 0,
       })
 
       if (res.newId) {
-        setOrganizations(prev =>
+        setLocalOrganizations(prev =>
           prev.map(org => org === organization ? { ...org, id: res.newId } : org)
         )
       }
@@ -128,8 +127,6 @@ function App() {
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
       alert(`❌ Failed to save: ${err.message || err}`)
-      setLocalOrganizations(prev => prev.filter(org => org !== organization))
-      setOrganizations(prev => prev.filter(org => org !== organization))
     }
   }
 

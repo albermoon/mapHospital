@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.3] - 16-10-2025
+## [1.2.1] - 20-10-2025
 
 ### Added
 - Google Sheets API handler (`/api/google-sheets.js`) for GET/POST requests
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Speciality not showing up nor posting
 - Fixed filter not hiding both Hospitales and Asociaciones when prompted
 - Fixed an interaction bewtween the fetch and the cache, sometimes it fetch the data of one, then took it from the cache, doubling the result
+- Removed the marker appearing when adding a new organization
 
 ### Changed
 - App now defaults to `Asociaciones` if `Hospitales` sheet is empty
