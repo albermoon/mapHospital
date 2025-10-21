@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useTranslation } from '../utils/i18n'
+import { useTranslation } from '../l10n/i18n'
 
 const SearchControl = ({ organizations, onSelectOrganization }) => {
   const { t } = useTranslation()
@@ -151,7 +151,7 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
           ref={searchInputRef}
           type="text"
           className="search-input"
-          placeholder={t('searchOrganizations') || 'Search organizations...'}
+          placeholder={t('searchOrganizations')}
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}

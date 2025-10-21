@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTranslation } from '../utils/i18n'
+import { useTranslation } from '../l10n/i18n'
 
 const LanguageSelector = () => {
   const { t, changeLanguage, currentLocale } = useTranslation()

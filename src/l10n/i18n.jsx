@@ -1,7 +1,7 @@
 import React from 'react';
-import en from '../locales/app_en.arb';
-import es from '../locales/app_es.arb';
-import fr from '../locales/app_fr.arb';
+import en from './app_en.arb';
+import es from './app_es.arb';
+import fr from './app_fr.arb';
 
 const clean = ({ ["@@locale"]: _removed, ...rest }) => rest;
 
@@ -25,7 +25,16 @@ export const I18nProvider = ({ children }) => {
         return ['en', 'es', 'fr'].includes(browserLang) ? browserLang : 'es';
     });
 
-    const t = (key) => translations[locale][key] || key;
+    const t = (key, placeholders = {}) => {
+        let translation = translations[locale][key] || key;
+        
+        // Replace placeholders in the translation
+        Object.entries(placeholders).forEach(([placeholder, value]) => {
+            translation = translation.replace(`{${placeholder}}`, value);
+        });
+        
+        return translation;
+    };
 
     const changeLanguage = (newLocale) => {
         if (['en', 'es', 'fr'].includes(newLocale)) setLocale(newLocale);

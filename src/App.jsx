@@ -3,7 +3,7 @@ import MapComponent from './components/MapComponent'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
 import LanguageSelector from './components/LanguageSelector'
 import GoogleSheetsStatus from './components/GoogleSheetsStatus'
-import { useTranslation } from './utils/i18n'
+import { useTranslation } from './l10n/i18n'
 import './App.css'
 
 function App() {
@@ -123,15 +123,15 @@ function App() {
       }
 
       console.log('Saved to Google Sheets!')
-      alert(`✅ ${organization.name} added successfully!`)
+      alert(t('organizationAddedSuccessfully', { organizationName: organization.name }))
     } catch (err) {
       console.error('Failed to save to Google Sheets:', err)
-      alert(`❌ Failed to save: ${err.message || err}`)
+      alert(t('failedToSave', { errorMessage: err.message || err }))
     }
   }
 
   const handleSheetChange = (sheetName) => setCurrentSheet(sheetName)
-  const handleSyncWithLocal = () => alert("Sync functionality would be implemented here")
+  const handleSyncWithLocal = () => alert(t('syncFunctionalityMessage'))
 
   // Overlay stays until all sheets finish
   const anySheetLoading = Object.values(loadingSheets).some(v => v === true)
@@ -146,7 +146,7 @@ function App() {
       <main>
         <div style={{ margin: '10px 0' }}>
           <label>
-            Select sheet:
+            {t('selectSheet')}
             <select
               value={currentSheet}
               onChange={(e) => handleSheetChange(e.target.value)}

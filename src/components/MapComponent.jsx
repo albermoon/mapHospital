@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
 import SearchControl from './SearchControl'
-import { useTranslation } from '../utils/i18n'
+import { useTranslation } from '../l10n/i18n'
 
 // Fix for default Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl

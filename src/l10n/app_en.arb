@@ -1,0 +1,78 @@
+{
+  "@@locale": "en",
+  "appTitle": "Hospital Map",
+  "organizationAddedSuccessfully": "✅ {organizationName} has been saved and is pending validation before being published on the map.",
+  "@organizationAddedSuccessfully": {
+    "placeholders": {
+      "organizationName": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSave": "❌ Failed to save: {errorMessage}",
+  "@failedToSave": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFunctionalityMessage": "Sync functionality would be implemented here",
+  "selectSheet": "Select sheet:",
+  "geolocationError": "Error getting your location",
+  "geolocationNotSupported": "Geolocation is not supported by this browser",
+  "loading": "Loading...",
+  "error": "Error",
+  "sync": "Sync",
+  "addOrganization": "Add Organization",
+  "name": "Name",
+  "type": "Type",
+  "address": "Address",
+  "phone": "Phone",
+  "website": "Website",
+  "email": "Email",
+  "country": "Country",
+  "city": "City",
+  "speciality": "Speciality",
+  "hospital": "Hospital",
+  "association": "Association",
+  "save": "Save",
+  "cancel": "Cancel",
+  "close": "Close",
+  "requiredField": "This field is required",
+  "mustSelectLocation": "You must select a location",
+  "invalidEmail": "Please enter a valid email address",
+  "invalidWebsite": "Please enter a valid website URL (starting with http)",
+  "selectLocation": "Select Location",
+  "locationSelectionMode": "Location Selection Mode",
+  "locationSelectionDescription": "Click on the map to select the location for this organization.",
+  "clickMapToSelect": "Click anywhere on the map to set the location",
+  "selectOrganizationType": "Organization Type",
+  "organizationName": "Organization Name",
+  "fullAddress": "Full Address",
+  "organizationSpeciality": "Organization Speciality",
+  "locationSelected": "Location Selected",
+  "changeLocation": "Change Location",
+  "clickToSelectLocation": "Click to Select Location",
+  "mapWillOpen": "A map will open for location selection",
+  "googleSheetsStatus": "Google Sheets Status",
+  "environmentInformation": "Environment Information",
+  "mode": "Mode",
+  "development": "Development",
+  "production": "Production",
+  "googleSheets": "Google Sheets",
+  "enabled": "Enabled",
+  "browser": "Browser",
+  "platform": "Platform",
+  "online": "Online",
+  "yes": "Yes",
+  "no": "No",
+  "syncing": "Syncing",
+  "syncWithLocalData": "Sync with Local Data",
+  "debugInformation": "Debug Information",
+  "developmentOnly": "Development Only",
+  "viewEnvironmentDetails": "View environment details",
+  "searchOrganizations": "Search organizations...",
+  "hospitals": "Hospitals",
+  "associations": "Associations"
+}

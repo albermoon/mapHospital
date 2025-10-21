@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './AddOrganizationForm.css'
-import { useTranslation } from '../utils/i18n'
+import { useTranslation } from '../l10n/i18n'
 
 const AddOrganizationForm = ({
   isOpen,

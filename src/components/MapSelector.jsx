@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './MapSelector.css'
-import { useTranslation } from '../utils/i18n'
+import { useTranslation } from '../l10n/i18n'
 
 const MapSelector = ({ isOpen, onClose, onLocationSelect, initialCenter = [50.8503, 4.3517] }) => {
   const { t } = useTranslation()

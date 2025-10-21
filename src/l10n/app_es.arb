@@ -1,0 +1,78 @@
+{
+  "@@locale": "es",
+  "appTitle": "Mapa de Hospitales",
+  "organizationAddedSuccessfully": "✅ {organizationName} ha sido guardado y está pendiente de validación antes de ser publicado en el mapa.",
+  "@organizationAddedSuccessfully": {
+    "placeholders": {
+      "organizationName": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSave": "❌ Error al guardar: {errorMessage}",
+  "@failedToSave": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFunctionalityMessage": "La funcionalidad de sincronización se implementaría aquí",
+  "selectSheet": "Seleccionar hoja:",
+  "geolocationError": "Error al obtener tu ubicación",
+  "geolocationNotSupported": "La geolocalización no es compatible con este navegador",
+  "loading": "Cargando...",
+  "error": "Error",
+  "sync": "Sincronizar",
+  "addOrganization": "Agregar Organización",
+  "name": "Nombre",
+  "type": "Tipo",
+  "address": "Dirección",
+  "phone": "Teléfono",
+  "website": "Sitio Web",
+  "email": "Correo Electrónico",
+  "country": "País",
+  "city": "Ciudad",
+  "speciality": "Especialidad",
+  "hospital": "Hospital",
+  "association": "Asociación",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "requiredField": "Este campo es obligatorio",
+  "mustSelectLocation": "Debes seleccionar una ubicación",
+  "invalidEmail": "Por favor ingresa una dirección de correo válida",
+  "invalidWebsite": "Por favor ingresa una URL de sitio web válida (que comience con http)",
+  "selectLocation": "Seleccionar Ubicación",
+  "locationSelectionMode": "Modo de Selección de Ubicación",
+  "locationSelectionDescription": "Haz clic en el mapa para seleccionar la ubicación de esta organización.",
+  "clickMapToSelect": "Haz clic en cualquier lugar del mapa para establecer la ubicación",
+  "selectOrganizationType": "Tipo de Organización",
+  "organizationName": "Nombre de la Organización",
+  "fullAddress": "Dirección Completa",
+  "organizationSpeciality": "Especialidad de la Organización",
+  "locationSelected": "Ubicación Seleccionada",
+  "changeLocation": "Cambiar Ubicación",
+  "clickToSelectLocation": "Haz clic para Seleccionar Ubicación",
+  "mapWillOpen": "Se abrirá un mapa para la selección de ubicación",
+  "googleSheetsStatus": "Estado de Google Sheets",
+  "environmentInformation": "Información del Entorno",
+  "mode": "Modo",
+  "development": "Desarrollo",
+  "production": "Producción",
+  "googleSheets": "Google Sheets",
+  "enabled": "Habilitado",
+  "browser": "Navegador",
+  "platform": "Plataforma",
+  "online": "En Línea",
+  "yes": "Sí",
+  "no": "No",
+  "syncing": "Sincronizando",
+  "syncWithLocalData": "Sincronizar con Datos Locales",
+  "debugInformation": "Información de Depuración",
+  "developmentOnly": "Solo Desarrollo",
+  "viewEnvironmentDetails": "Ver detalles del entorno",
+  "searchOrganizations": "Buscar organizaciones...",
+  "hospitals": "Hospitales",
+  "associations": "Asociaciones"
+}
