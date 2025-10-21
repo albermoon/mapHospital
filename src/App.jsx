@@ -8,7 +8,7 @@ import './App.css'
 
 function App() {
   const { t } = useTranslation()
-  const { data, loading, error, fetchData, saveData } = useGoogleSheets()
+  const { error, fetchData, saveData } = useGoogleSheets()
 
   const [organizations, setOrganizations] = useState([])
   const [localOrganizations, setLocalOrganizations] = useState([])

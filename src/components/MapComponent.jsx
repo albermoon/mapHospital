@@ -28,7 +28,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isSelectingLocation, setIsSelectingLocation] = useState(false)
   const [locationSelectionCallback, setLocationSelectionCallback] = useState(null)
-  const [selectedCoordinates, setSelectedCoordinates] = useState(null)
   const [showHospitals, setShowHospitals] = useState(true)
   const [showAssociations, setShowAssociations] = useState(true)
   const [filterPanelExpanded, setFilterPanelExpanded] = useState(false)
@@ -363,7 +362,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         onAdd={handleAddOrganization}
         organizations={organizations}
         onStartLocationSelection={handleLocationSelection}
-        selectedCoordinates={selectedCoordinates}
         isLocationSelectionMode={isSelectingLocation}
       />
     </div>

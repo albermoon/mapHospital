@@ -2,7 +2,7 @@ import React from 'react'
 import { useTranslation } from '../l10n/i18n'
 
 const LanguageSelector = () => {
-  const { t, changeLanguage, currentLocale } = useTranslation()
+  const { changeLanguage, currentLocale } = useTranslation()
 
   return (
     <div className="language-selector">

@@ -227,7 +227,7 @@ The project implements a comprehensive testing strategy using modern tools and b
 **Examples**:
 - `src/utils/filter.js` - Data filtering logic
 - `src/utils/mapIcons.js` - Icon creation utilities
-- `src/utils/i18n.jsx` - Internationalization helpers
+- `src/l10n/i18n.jsx` - Internationalization helpers
 
 **Coverage Target**: 90%+ for utility functions
 

@@ -127,8 +127,7 @@ const SearchControl = ({ organizations, onSelectOrganization }) => {
   }
 
   // Handle input blur - don't collapse immediately
-  const handleInputBlur = (e) => {
-    // Only hide results on blur, don't collapse the search bar
+  const handleInputBlur = () => {
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
         setShowResults(false)
