@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 
 export const SHEET_NAMES = {
-  ORGANIZACIONES: 'Organizaciones',
   HOSPITALES: 'Hospitales',
   ASOCIACIONES: 'Asociaciones'
 }
