@@ -39,6 +39,9 @@ function App() {
         const mappedType =
           Object.entries(typeMappings).find(([_, values]) => values.includes(rawType))?.[0] || 'association'
 
+        const status = parseInt(item.Status) || 0
+        if (status !== 1) return null
+
         return {
           id: item.ID,
           name: item.Name,
@@ -51,7 +54,7 @@ function App() {
           country: item.Country || '',
           city: item.City || '',
           speciality: item.Speciality || '',
-          status: item.Status || 0
+          status
         }
       })
       .filter(org => org !== null)
