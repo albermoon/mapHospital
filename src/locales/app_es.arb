@@ -32,5 +32,7 @@
   "locationSelected": "Ubicación seleccionada",
   "changeLocation": "Cambiar ubicación",
   "Hospitals": "Hospitales",
-  "Associations": "Asociaciones"
+  "Associations": "Asociaciones",
+  "directions": "Cómo llegar",
+  "openInGoogleMaps": "Abrir en Google Maps"
 }

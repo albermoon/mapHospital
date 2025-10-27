@@ -115,7 +115,15 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             <strong>🏷️ ${t('speciality')}:</strong> ${org.speciality}
           </p>
         ` : ''}
-      </div>
+        ${org.coordinates && org.coordinates.length === 2 ? `
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>➡️ ${t('directions')}:</strong>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${org.coordinates[0]},${org.coordinates[1]}"
+              target="_blank" rel="noopener noreferrer">
+              ${t('openInGoogleMaps')}
+            </a>
+          </p>
+        ` : ''}
     `
   }, [t])
 
