@@ -1,0 +1,78 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Carte des Hôpitaux",
+  "organizationAddedSuccessfully": "✅ {organizationName} a été sauvegardé et est en attente de validation avant d'être publié sur la carte.",
+  "@organizationAddedSuccessfully": {
+    "placeholders": {
+      "organizationName": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSave": "❌ Échec de la sauvegarde : {errorMessage}",
+  "@failedToSave": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFunctionalityMessage": "La fonctionnalité de synchronisation serait implémentée ici",
+  "selectSheet": "Sélectionner la feuille :",
+  "geolocationError": "Erreur lors de l'obtention de votre position",
+  "geolocationNotSupported": "La géolocalisation n'est pas prise en charge par ce navigateur",
+  "loading": "Chargement...",
+  "error": "Erreur",
+  "sync": "Synchroniser",
+  "addOrganization": "Ajouter une Organisation",
+  "name": "Nom",
+  "type": "Type",
+  "address": "Adresse",
+  "phone": "Téléphone",
+  "website": "Site Web",
+  "email": "E-mail",
+  "country": "Pays",
+  "city": "Ville",
+  "speciality": "Spécialité",
+  "hospital": "Hôpital",
+  "association": "Association",
+  "save": "Sauvegarder",
+  "cancel": "Annuler",
+  "close": "Fermer",
+  "requiredField": "Ce champ est obligatoire",
+  "mustSelectLocation": "Vous devez sélectionner un emplacement",
+  "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+  "invalidWebsite": "Veuillez entrer une URL de site web valide (commençant par http)",
+  "selectLocation": "Sélectionner l'Emplacement",
+  "locationSelectionMode": "Mode de Sélection d'Emplacement",
+  "locationSelectionDescription": "Cliquez sur la carte pour sélectionner l'emplacement de cette organisation.",
+  "clickMapToSelect": "Cliquez n'importe où sur la carte pour définir l'emplacement",
+  "selectOrganizationType": "Type d'Organisation",
+  "organizationName": "Nom de l'Organisation",
+  "fullAddress": "Adresse Complète",
+  "organizationSpeciality": "Spécialité de l'Organisation",
+  "locationSelected": "Emplacement Sélectionné",
+  "changeLocation": "Changer l'Emplacement",
+  "clickToSelectLocation": "Cliquez pour Sélectionner l'Emplacement",
+  "mapWillOpen": "Une carte s'ouvrira pour la sélection d'emplacement",
+  "googleSheetsStatus": "État de Google Sheets",
+  "environmentInformation": "Informations sur l'Environnement",
+  "mode": "Mode",
+  "development": "Développement",
+  "production": "Production",
+  "googleSheets": "Google Sheets",
+  "enabled": "Activé",
+  "browser": "Navigateur",
+  "platform": "Plateforme",
+  "online": "En Ligne",
+  "yes": "Oui",
+  "no": "Non",
+  "syncing": "Synchronisation",
+  "syncWithLocalData": "Synchroniser avec les Données Locales",
+  "debugInformation": "Informations de Débogage",
+  "developmentOnly": "Développement Uniquement",
+  "viewEnvironmentDetails": "Voir les détails de l'environnement",
+  "searchOrganizations": "Rechercher des organisations...",
+  "hospitals": "Hôpitaux",
+  "associations": "Associations"
+}

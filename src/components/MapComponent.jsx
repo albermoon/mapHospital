@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import { hospitalIcon, associationIcon, hospitalIconMobile, associationIconMobile } from '../utils/mapIcons'
 import AddOrganizationForm from './AddOrganizationForm'
 import SearchControl from './SearchControl'
-import { useTranslation } from '../utils/i18n'
+import { useTranslation } from '../l10n/i18n'
 
 // Fix for default Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl
@@ -28,7 +28,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isSelectingLocation, setIsSelectingLocation] = useState(false)
   const [locationSelectionCallback, setLocationSelectionCallback] = useState(null)
-  const [selectedCoordinates, setSelectedCoordinates] = useState(null)
   const [showHospitals, setShowHospitals] = useState(true)
   const [showAssociations, setShowAssociations] = useState(true)
   const [filterPanelExpanded, setFilterPanelExpanded] = useState(false)
@@ -371,7 +370,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         onAdd={handleAddOrganization}
         organizations={organizations}
         onStartLocationSelection={handleLocationSelection}
-        selectedCoordinates={selectedCoordinates}
         isLocationSelectionMode={isSelectingLocation}
       />
     </div>

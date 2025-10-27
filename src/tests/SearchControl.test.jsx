@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import SearchControl from '../components/SearchControl'
-import { I18nProvider } from '../utils/i18n'
+import { I18nProvider } from '../l10n/i18n'
 
 const organizations = [
   { id: '1', name: 'City Hospital', address: '123 Main St', city: 'Brussels', country: 'Belgium', specialty: 'Cardiology', type: 'hospital' },
