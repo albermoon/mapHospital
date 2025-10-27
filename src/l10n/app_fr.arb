@@ -74,5 +74,7 @@
   "viewEnvironmentDetails": "Voir les détails de l'environnement",
   "searchOrganizations": "Rechercher des organisations...",
   "hospitals": "Hôpitaux",
-  "associations": "Associations"
+  "associations": "Associations",
+  "directions": "Directions",
+  "openInGoogleMaps": "Ouvrir dans Google Maps"
 }
