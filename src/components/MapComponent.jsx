@@ -70,11 +70,14 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     markersRef.current = []
   }, [])
 
-  // Generate map link depending on device
-  const generateMapLink = (lat, lng) => {
-    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      return `geo:${lat},${lng}`
+  // Mobile-safe map link generator
+  const generateMapLink = (lat, lng, name) => {
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    if (isMobile) {
+      // Mobile: geo URI with query label
+      return `geo:${lat},${lng}?q=${encodeURIComponent(lat + ',' + lng + ' (' + name + ')')}`
     } else {
+      // Desktop: Google Maps fallback
       return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
     }
   }
@@ -99,31 +102,14 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
             ${org.address}
           </a>
         </p>
-        ${org.phone ? `
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>📞 ${t('phone')}:</strong> ${org.phone}
-          </p>
-        ` : ''}
-        ${org.website ? `
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>🌐 ${t('website')}:</strong> 
-            <a href="${org.website}" target="_blank" rel="noopener noreferrer">${org.website}</a>
-          </p>
-        ` : ''}
-        ${org.email ? `
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>✉️ ${t('email')}:</strong> ${org.email}
-          </p>
-        ` : ''}
-        ${org.speciality ? `
-          <p style="margin: 5px 0; font-size: 12px;">
-            <strong>🏷️ ${t('speciality')}:</strong> ${org.speciality}
-          </p>
-        ` : ''}
+        ${org.phone ? `<p style="margin: 5px 0; font-size: 12px;"><strong>📞 ${t('phone')}:</strong> ${org.phone}</p>` : ''}
+        ${org.website ? `<p style="margin: 5px 0; font-size: 12px;"><strong>🌐 ${t('website')}:</strong> <a href="${org.website}" target="_blank" rel="noopener noreferrer">${org.website}</a></p>` : ''}
+        ${org.email ? `<p style="margin: 5px 0; font-size: 12px;"><strong>✉️ ${t('email')}:</strong> ${org.email}</p>` : ''}
+        ${org.speciality ? `<p style="margin: 5px 0; font-size: 12px;"><strong>🏷️ ${t('speciality')}:</strong> ${org.speciality}</p>` : ''}
         ${org.coordinates && org.coordinates.length === 2 ? `
           <p style="margin: 5px 0; font-size: 12px;">
             <strong>➡️ ${t('directions')}:</strong>
-            <a href="${generateMapLink(org.coordinates[0], org.coordinates[1])}" target="_blank">
+            <a href="${generateMapLink(org.coordinates[0], org.coordinates[1], org.name)}" target="_blank">
               ${t('openInMaps')}
             </a>
           </p>
@@ -139,9 +125,9 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
     if (!filteredOrganizations || filteredOrganizations.length === 0) return
 
-    const isMobile = window.innerWidth <= 768
-    const hospitalIconToUse = isMobile ? hospitalIconMobile : hospitalIcon
-    const associationIconToUse = isMobile ? associationIconMobile : associationIcon
+    const isMobileScreen = window.innerWidth <= 768
+    const hospitalIconToUse = isMobileScreen ? hospitalIconMobile : hospitalIcon
+    const associationIconToUse = isMobileScreen ? associationIconMobile : associationIcon
 
     filteredOrganizations.forEach((org) => {
       if (!org.coordinates || org.coordinates.length !== 2) return
