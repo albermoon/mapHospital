@@ -70,14 +70,17 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     markersRef.current = []
   }, [])
 
-  // Mobile-safe map link generator
+  // Cross-platform map link generator
   const generateMapLink = (lat, lng, name) => {
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    if (isMobile) {
-      // Mobile: geo URI with query label
-      return `geo:${lat},${lng}?q=${encodeURIComponent(lat + ',' + lng + ' (' + name + ')')}`
+    const ua = navigator.userAgent
+    if (/iPhone|iPad|iPod/i.test(ua)) {
+      // Apple Maps app
+      return `maps://?q=${lat},${lng} (${encodeURIComponent(name)})`
+    } else if (/Android/i.test(ua)) {
+      // Google Maps app
+      return `geo:${lat},${lng}?q=${lat},${lng} (${encodeURIComponent(name)})`
     } else {
-      // Desktop: Google Maps fallback
+      // Desktop fallback
       return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
     }
   }
@@ -95,13 +98,11 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         <p style="margin: 5px 0; font-size: 12px; color: #666;">
           <strong>${t('type')}:</strong> ${org.type === 'hospital' ? '🏥' : '👥'} ${typeLabel}
         </p>
-        <p style="margin: 5px 0; font-size: 12px;">
-          <strong>📍 ${t('address')}:</strong>
-          <a class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
-             style="text-decoration: none;">
-            ${org.address}
-          </a>
-        </p>
+        ${org.coordinates && org.coordinates.length === 2 ? `
+          <p style="margin: 5px 0; font-size: 12px;">
+            <strong>📍 ${t('address')}:</strong> ${org.address}
+          </p>
+        ` : ''}
         ${org.phone ? `<p style="margin: 5px 0; font-size: 12px;"><strong>📞 ${t('phone')}:</strong> ${org.phone}</p>` : ''}
         ${org.website ? `<p style="margin: 5px 0; font-size: 12px;"><strong>🌐 ${t('website')}:</strong> <a href="${org.website}" target="_blank" rel="noopener noreferrer">${org.website}</a></p>` : ''}
         ${org.email ? `<p style="margin: 5px 0; font-size: 12px;"><strong>✉️ ${t('email')}:</strong> ${org.email}</p>` : ''}
@@ -117,6 +118,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
       </div>
     `
   }, [t])
+
 
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return
@@ -302,7 +304,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
 
     mapInstance.addControl(new GeolocationControl())
   }
-
 
   return (
     <div className="map-container">
