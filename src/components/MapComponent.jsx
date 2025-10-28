@@ -43,8 +43,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     }
   }, [propOrganizations])
 
-
-
   // Filter organizations based on toggle states
   useEffect(() => {
     const filtered = organizations.filter(org => {
@@ -55,7 +53,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     })
     setFilteredOrganizations(filtered)
   }, [organizations, showHospitals, showAssociations])
-
 
   // Memoize filter counts
   const filterCounts = useMemo(() => {
@@ -73,6 +70,15 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
     markersRef.current = []
   }, [])
 
+  // Generate map link depending on device
+  const generateMapLink = (lat, lng) => {
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      return `geo:${lat},${lng}`
+    } else {
+      return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    }
+  }
+
   // Memoize popup content
   const generatePopupContent = useCallback((org) => {
     const typeColor = org.type === 'hospital' ? '#dc3545' : '#007bff'
@@ -89,7 +95,7 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         <p style="margin: 5px 0; font-size: 12px;">
           <strong>📍 ${t('address')}:</strong>
           <a class="address-link" data-lat="${org.coordinates[0]}" data-lng="${org.coordinates[1]}" 
-             style="text-decoration:">
+             style="text-decoration: none;">
             ${org.address}
           </a>
         </p>
@@ -117,12 +123,12 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
         ${org.coordinates && org.coordinates.length === 2 ? `
           <p style="margin: 5px 0; font-size: 12px;">
             <strong>➡️ ${t('directions')}:</strong>
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${org.coordinates[0]},${org.coordinates[1]}"
-              target="_blank" rel="noopener noreferrer">
-              ${t('openInGoogleMaps')}
+            <a href="${generateMapLink(org.coordinates[0], org.coordinates[1])}" target="_blank">
+              ${t('openInMaps')}
             </a>
           </p>
         ` : ''}
+      </div>
     `
   }, [t])
 
@@ -292,7 +298,6 @@ const MapComponent = ({ organizations: propOrganizations = [], onAddOrganization
                   mapInstance.removeLayer(tempLocationMarkerRef.current)
                 }
 
-                // Add new temporary marker using default Leaflet icon
                 tempLocationMarkerRef.current = L.marker([latitude, longitude], {
                   icon: new L.Icon.Default(),
                 }).addTo(mapInstance)
