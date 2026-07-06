@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import MapComponent from './components/MapComponent'
 import { useGoogleSheets, SHEET_NAMES } from './hooks/useGoogleSheets'
-import LanguageSelector from './components/LanguageSelector'
 import GoogleSheetsStatus from './components/GoogleSheetsStatus'
 import { useTranslation } from './l10n/i18n'
 import './App.css'
@@ -141,11 +140,6 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>{t('appTitle')}</h1>
-        <LanguageSelector />
-      </header>
-
       <main>
         <div style={{ margin: '10px 0' }}>
           <label>
