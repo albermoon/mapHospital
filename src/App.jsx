@@ -38,8 +38,10 @@ function App() {
         const mappedType =
           Object.entries(typeMappings).find(([_, values]) => values.includes(rawType))?.[0] || 'association'
 
+        // Show approved (1) and pending/empty (0) entries; hospitals often have an
+        // empty Status column while associations are marked 1.
         const status = parseInt(item.Status) || 0
-        if (status !== 1) return null
+        if (status !== 0 && status !== 1) return null
 
         return {
           id: item.ID,
